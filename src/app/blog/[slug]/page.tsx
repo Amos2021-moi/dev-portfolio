@@ -177,7 +177,7 @@ export default function BlogPostPage({
 }: {
   params: { slug: string };
 }) {
-  const post = posts[params.slug];
+  const post = posts[params.slug as keyof typeof posts];
 
   if (!post) {
     return (

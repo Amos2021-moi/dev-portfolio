@@ -4,51 +4,36 @@ import { slugify, readingTime } from "@/lib/utils";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const post = await prisma.blogPost.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { category: true },
     });
-
     if (!post) {
-      return NextResponse.json(
-        { error: "Blog post not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
-
     return NextResponse.json(post);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch blog post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch blog post" }, { status: 500 });
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const {
-      title,
-      excerpt,
-      content,
-      coverImage,
-      tags,
-      published,
-      featured,
-    } = body;
-
+    const { title, excerpt, content, coverImage, tags, published, featured } = body;
     const slug = title ? slugify(title) : undefined;
     const postReadingTime = content ? readingTime(content) : undefined;
 
     const post = await prisma.blogPost.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title, slug }),
         ...(excerpt !== undefined && { excerpt }),
@@ -59,30 +44,21 @@ export async function PUT(
         ...(featured !== undefined && { featured }),
       },
     });
-
     return NextResponse.json(post);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update blog post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update blog post" }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await prisma.blogPost.delete({
-      where: { id: params.id },
-    });
-
+    const { id } = await params;
+    await prisma.blogPost.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete blog post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete blog post" }, { status: 500 });
   }
 }

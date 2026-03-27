@@ -7,11 +7,13 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  preload: false,
 });
 
 export const metadata: Metadata = {
