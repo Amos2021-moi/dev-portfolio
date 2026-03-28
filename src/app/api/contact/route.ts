@@ -10,7 +10,11 @@ export async function GET() {
     });
     return NextResponse.json(messages);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
+    console.error("Contact GET error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch messages", details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -34,10 +38,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await sendContactNotification({ name, email, subject: subject || "No subject", message });
+    await sendContactNotification({
+      name,
+      email,
+      subject: subject || "No subject",
+      message,
+    });
 
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    console.error("Contact POST error:", error);
+    return NextResponse.json(
+      { error: "Failed to send message", details: String(error) },
+      { status: 500 }
+    );
   }
 }
