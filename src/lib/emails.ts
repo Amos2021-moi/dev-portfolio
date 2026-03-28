@@ -15,7 +15,7 @@ export async function sendContactNotification({
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-      to: "amosmark2332@gmail.com",
+      to: "amosmark2021@gmail.com",
       subject: "New Contact Message: " + subject,
       html: `
         <!DOCTYPE html>
@@ -162,7 +162,7 @@ export async function sendNewsletterConfirmation({
 
                 <div style="text-align:center;margin-bottom:28px;">
                   
-                    href="https://dev-portfolio-jr4o.vercel.app"
+                    href="markosiemo.vercel.app"
                     style="display:inline-block;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:600;"
                   >
                     Visit My Portfolio

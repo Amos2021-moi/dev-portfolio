@@ -42,7 +42,7 @@ export const socialLinks = [
   },
   {
     label: "Email",
-    href: "mailto:amosmark2332@gmail.com",
+    href: "mailto:amosmark2021@gmail.com",
     icon: "mail",
   },
 ];
