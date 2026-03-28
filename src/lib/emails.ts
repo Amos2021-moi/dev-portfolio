@@ -1,7 +1,3 @@
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendContactNotification({
   name,
   email,
@@ -14,6 +10,9 @@ export async function sendContactNotification({
   message: string;
 }) {
   try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
       to: "amosmark2332@gmail.com",
@@ -96,6 +95,9 @@ export async function sendNewsletterConfirmation({
   email: string;
 }) {
   try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
       to: email,
@@ -120,10 +122,6 @@ export async function sendNewsletterConfirmation({
 
                 <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 20px;">
                   Hi there! Thank you for subscribing to my newsletter. I am excited to have you on board!
-                </p>
-
-                <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
-                  Here is what you can expect from me:
                 </p>
 
                 <div style="margin-bottom:28px;">
