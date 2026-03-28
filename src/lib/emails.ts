@@ -24,24 +24,17 @@ export async function sendContactNotification({
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>New Contact Message</title>
           </head>
           <body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-              
-              <!-- Header -->
+
               <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:40px 32px;text-align:center;">
-                <div style="width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:12px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-                  <span style="font-size:24px;">✉️</span>
-                </div>
                 <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">New Message!</h1>
                 <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Someone reached out through your portfolio</p>
               </div>
 
-              <!-- Content -->
               <div style="padding:32px;">
 
-                <!-- Sender Info -->
                 <div style="background:#f8fafc;border-radius:12px;padding:20px;margin-bottom:24px;">
                   <h2 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1e293b;">Sender Details</h2>
                   <table style="width:100%;border-collapse:collapse;">
@@ -52,7 +45,7 @@ export async function sendContactNotification({
                     <tr>
                       <td style="padding:8px 0;color:#64748b;font-size:14px;">Email</td>
                       <td style="padding:8px 0;font-size:14px;">
-                        <a href="mailto:${email}" style="color:#3b82f6;text-decoration:none;font-weight:500;">${email}</a>
+                        <a href="mailto:${email}" style="color:#3b82f6;text-decoration:none;">${email}</a>
                       </td>
                     </tr>
                     <tr>
@@ -62,7 +55,6 @@ export async function sendContactNotification({
                   </table>
                 </div>
 
-                <!-- Message -->
                 <div style="margin-bottom:24px;">
                   <h2 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1e293b;">Message</h2>
                   <div style="background:#f8fafc;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:16px 20px;">
@@ -70,7 +62,6 @@ export async function sendContactNotification({
                   </div>
                 </div>
 
-                <!-- Reply Button -->
                 <div style="text-align:center;margin-bottom:24px;">
                   
                     href="mailto:${email}?subject=Re: ${subject}"
@@ -80,11 +71,9 @@ export async function sendContactNotification({
                   </a>
                 </div>
 
-                <!-- Footer -->
                 <div style="border-top:1px solid #e2e8f0;padding-top:20px;text-align:center;">
                   <p style="margin:0;color:#94a3b8;font-size:12px;">
-                    This message was sent from your portfolio contact form at
-                    <a href="https://dev-portfolio-jr4o.vercel.app" style="color:#3b82f6;text-decoration:none;">Mark.dev</a>
+                    Sent from your portfolio contact form at Mark.dev
                   </p>
                 </div>
 
@@ -117,19 +106,16 @@ export async function sendNewsletterConfirmation({
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome to Mark's Newsletter</title>
           </head>
           <body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
 
-              <!-- Header -->
               <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:40px 32px;text-align:center;">
                 <div style="font-size:48px;margin-bottom:16px;">🎉</div>
                 <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">You are subscribed!</h1>
                 <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Welcome to Mark Osiemo's newsletter</p>
               </div>
 
-              <!-- Content -->
               <div style="padding:32px;">
 
                 <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 20px;">
@@ -140,25 +126,42 @@ export async function sendNewsletterConfirmation({
                   Here is what you can expect from me:
                 </p>
 
-                <!-- Benefits -->
-                <div style="space-y:12px;margin-bottom:28px;">
-                  ${[
-                    { emoji: "🚀", title: "New Projects", desc: "Be the first to know when I launch something new" },
-                    { emoji: "📝", title: "Blog Posts", desc: "Tutorials and insights about web development" },
-                    { emoji: "💡", title: "Dev Tips", desc: "Useful tips and tricks I discover along the way" },
-                    { emoji: "🎓", title: "Learning Updates", desc: "My journey as a CS student at SEKU" },
-                  ].map((item) => `
-                    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
-                      <span style="font-size:20px;">${item.emoji}</span>
-                      <div>
-                        <p style="margin:0 0 2px;font-weight:600;color:#1e293b;font-size:14px;">${item.title}</p>
-                        <p style="margin:0;color:#64748b;font-size:13px;">${item.desc}</p>
-                      </div>
+                <div style="margin-bottom:28px;">
+
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
+                    <span style="font-size:20px;">🚀</span>
+                    <div>
+                      <p style="margin:0 0 2px;font-weight:600;color:#1e293b;font-size:14px;">New Projects</p>
+                      <p style="margin:0;color:#64748b;font-size:13px;">Be the first to know when I launch something new</p>
                     </div>
-                  `).join("")}
+                  </div>
+
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
+                    <span style="font-size:20px;">📝</span>
+                    <div>
+                      <p style="margin:0 0 2px;font-weight:600;color:#1e293b;font-size:14px;">Blog Posts</p>
+                      <p style="margin:0;color:#64748b;font-size:13px;">Tutorials and insights about web development</p>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
+                    <span style="font-size:20px;">💡</span>
+                    <div>
+                      <p style="margin:0 0 2px;font-weight:600;color:#1e293b;font-size:14px;">Dev Tips</p>
+                      <p style="margin:0;color:#64748b;font-size:13px;">Useful tips and tricks I discover along the way</p>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;">
+                    <span style="font-size:20px;">🎓</span>
+                    <div>
+                      <p style="margin:0 0 2px;font-weight:600;color:#1e293b;font-size:14px;">Learning Updates</p>
+                      <p style="margin:0;color:#64748b;font-size:13px;">My journey as a CS student at SEKU</p>
+                    </div>
+                  </div>
+
                 </div>
 
-                <!-- CTA -->
                 <div style="text-align:center;margin-bottom:28px;">
                   
                     href="https://dev-portfolio-jr4o.vercel.app"
@@ -168,10 +171,9 @@ export async function sendNewsletterConfirmation({
                   </a>
                 </div>
 
-                <!-- Footer -->
                 <div style="border-top:1px solid #e2e8f0;padding-top:20px;text-align:center;">
                   <p style="margin:0 0 4px;color:#94a3b8;font-size:12px;">
-                    You are receiving this because you subscribed at Mark.dev
+                    You subscribed at Mark.dev
                   </p>
                   <p style="margin:0;color:#94a3b8;font-size:12px;">
                     Mark Amos Osiemo · SEKU · Kenya
