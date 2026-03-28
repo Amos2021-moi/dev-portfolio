@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { sendNewsletterConfirmation } from "@/lib/emails";
 
 export async function GET() {
   try {
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest) {
     const subscriber = await prisma.subscriber.create({
       data: { email, name: name || "" },
     });
+
+    await sendNewsletterConfirmation({ email });
 
     return NextResponse.json(subscriber, { status: 201 });
   } catch (error) {
