@@ -3,17 +3,16 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/lib/config";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import SessionProvider from "@/components/providers/SessionProvider";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -75,7 +74,9 @@ export default function RootLayout({
           color: "var(--color-foreground)",
         }}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
