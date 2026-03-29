@@ -1,272 +1,281 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import { ExternalLink, GitBranch, Star, Search, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Save } from "lucide-react";
 
-const statusOptions = ["ACTIVE", "COMPLETED", "ARCHIVED"];
+interface Project {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  techStack: string[];
+  githubUrl: string;
+  liveUrl: string;
+  stars: number;
+  status: string;
+  featured: boolean;
+  views: number;
+}
 
-export default function NewProjectPage() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    content: "",
-    githubUrl: "",
-    liveUrl: "",
-    status: "ACTIVE",
-    featured: false,
+const categories = ["All", "Full Stack", "Frontend", "Backend", "AI"];
+
+const gradients = [
+  "from-blue-500 to-purple-500",
+  "from-green-500 to-teal-500",
+  "from-orange-500 to-pink-500",
+  "from-purple-500 to-pink-500",
+  "from-cyan-500 to-blue-500",
+  "from-yellow-500 to-orange-500",
+];
+
+export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((res) => res.json())
+      .then((data) => {
+        setProjects(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const filtered = projects.filter((p) => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.description.toLowerCase().includes(search.toLowerCase()) ||
+      p.techStack.some((t) =>
+        t.toLowerCase().includes(search.toLowerCase())
+      );
+    return matchesSearch;
   });
-  const [techStack, setTechStack] = useState<string[]>([]);
-  const [techInput, setTechInput] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const addTech = () => {
-    if (techInput.trim() && !techStack.includes(techInput.trim())) {
-      setTechStack((prev) => [...prev, techInput.trim()]);
-      setTechInput("");
-    }
-  };
-
-  const removeTech = (tech: string) => {
-    setTechStack((prev) => prev.filter((t) => t !== tech));
-  };
-
-  const handleSave = async () => {
-    if (!formData.title || !formData.description) {
-      setError("Title and description are required.");
-      return;
-    }
-    setIsSaving(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, techStack }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "Failed to save project.");
-        setIsSaving(false);
-        return;
-      }
-
-      router.push("/admin/projects");
-    } catch {
-      setError("Something went wrong. Please try again.");
-      setIsSaving(false);
-    }
-  };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/admin/projects"
-          className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground"
+    <main className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero */}
+      <section className="section-padding pt-32 pb-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">New Project</h1>
-          <p className="text-muted-foreground text-sm mt-1">Add a new project to your portfolio</p>
-        </div>
-      </div>
+          <p className="text-primary font-mono text-sm mb-2">My Work</p>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4">All Projects</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            A collection of projects I have built, from full-stack web apps
+            to AI-powered tools and everything in between.
+          </p>
+        </motion.div>
+      </section>
 
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-500 px-4 py-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="font-semibold">Basic Information</h2>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Project Title *</label>
+      {/* Filters */}
+      <section className="container-max px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="My Awesome Project"
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
+              placeholder="Search projects or technologies..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none"
               style={{ borderColor: "var(--color-border)" }}
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Short Description *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="A brief description of your project..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none resize-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Full Content</label>
-            <textarea
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              placeholder="Detailed description, features, challenges..."
-              rows={6}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none resize-none font-mono"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-        </div>
-
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="font-semibold">Links</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">GitHub URL</label>
-              <input
-                type="url"
-                name="githubUrl"
-                value={formData.githubUrl}
-                onChange={handleChange}
-                placeholder="https://github.com/username/repo"
-                className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-                style={{ borderColor: "var(--color-border)" }}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Live URL</label>
-              <input
-                type="url"
-                name="liveUrl"
-                value={formData.liveUrl}
-                onChange={handleChange}
-                placeholder="https://myproject.vercel.app"
-                className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-                style={{ borderColor: "var(--color-border)" }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="font-semibold">Tech Stack</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={techInput}
-              onChange={(e) => setTechInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addTech()}
-              placeholder="e.g. Next.js"
-              className="flex-1 px-4 py-2.5 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-            <button
-              onClick={addTech}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </button>
-          </div>
-          {techStack.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {techStack.map((tech) => (
-                <span
-                  key={tech}
-                  className="flex items-center gap-1.5 bg-muted text-muted-foreground px-3 py-1.5 rounded-lg text-sm font-mono"
-                >
-                  {tech}
-                  <button onClick={() => removeTech(tech)} className="hover:text-foreground transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="font-semibold">Settings</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-                style={{ borderColor: "var(--color-border)" }}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  backgroundColor:
+                    activeCategory === cat
+                      ? "var(--color-primary)"
+                      : "var(--color-muted)",
+                  color:
+                    activeCategory === cat
+                      ? "var(--color-primary-foreground)"
+                      : "var(--color-muted-foreground)",
+                }}
               >
-                {statusOptions.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Featured</label>
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Projects Grid */}
+      <section className="container-max px-4 sm:px-6 lg:px-8 pb-24">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-muted/50"
+                key={i}
+                className="bg-background rounded-xl border p-6 animate-pulse"
                 style={{ borderColor: "var(--color-border)" }}
               >
-                <input
-                  type="checkbox"
-                  id="featured"
-                  checked={formData.featured}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, featured: e.target.checked }))}
-                  className="w-4 h-4 accent-primary"
-                />
-                <label htmlFor="featured" className="text-sm text-muted-foreground cursor-pointer">
-                  Show on homepage
-                </label>
+                <div className="h-4 bg-muted rounded mb-4 w-3/4" />
+                <div className="h-3 bg-muted rounded mb-2" />
+                <div className="h-3 bg-muted rounded mb-2 w-5/6" />
+                <div className="h-3 bg-muted rounded w-4/6" />
               </div>
-            </div>
+            ))}
           </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {isSaving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Project
-              </>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground text-lg mb-4">
+              {projects.length === 0
+                ? "No projects yet. Add your first project!"
+                : "No projects match your search."}
+            </p>
+            {projects.length === 0 && (
+              <Link
+                href="/admin/projects/new"
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+              >
+                <Plus className="w-4 h-4" />
+                Add First Project
+              </Link>
             )}
-          </button>
-          <Link
-            href="/admin/projects"
-            className="px-6 py-3 rounded-lg border text-sm font-medium hover:bg-accent transition-colors"
-            style={{ borderColor: "var(--color-border)" }}
+            {projects.length > 0 && (
+              <button
+                onClick={() => setSearch("")}
+                className="text-primary hover:opacity-80 transition-opacity"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            Cancel
-          </Link>
-        </div>
+            {filtered.map((project, index) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="group bg-background rounded-xl border overflow-hidden hover:shadow-lg transition-all duration-300"
+                style={{ borderColor: "var(--color-border)" }}
+              >
+                {/* Gradient Top Bar */}
+                <div
+                  className={"h-1 w-full bg-gradient-to-r " + gradients[index % gradients.length]}
+                />
 
-      </motion.div>
-    </div>
+                <div className="p-6 flex flex-col gap-4">
+                  {/* Status & Stars */}
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-xs font-medium px-2 py-1 rounded-full"
+                      style={{
+                        backgroundColor:
+                          project.status === "ACTIVE"
+                            ? "rgb(34 197 94 / 0.1)"
+                            : "rgb(59 130 246 / 0.1)",
+                        color:
+                          project.status === "ACTIVE"
+                            ? "rgb(34 197 94)"
+                            : "rgb(59 130 246)",
+                      }}
+                    >
+                      {project.status}
+                    </span>
+                    {project.stars > 0 && (
+                      <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                        {project.stars}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title & Description */}
+                  <div>
+                    <Link href={"/projects/" + project.slug}>
+                      <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors cursor-pointer">
+                        {project.title}
+                      </h3>
+                    </Link>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {project.description}
+                    </p>
+                  </div>
+
+                  {/* Tech Stack */}
+                  <div className="flex flex-wrap gap-2">
+                    {project.techStack.slice(0, 4).map((tech) => (
+                      <span
+                        key={tech}
+                        className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-xs font-mono"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                    {project.techStack.length > 4 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{project.techStack.length - 4}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Links */}
+                  <div
+                    className="flex items-center gap-4 pt-2 border-t"
+                    style={{ borderColor: "var(--color-border)" }}
+                  >
+                    {project.githubUrl && (
+                      <a
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                      >
+                        <GitBranch className="w-4 h-4" />
+                        Code
+                      </a>
+                    )}
+                    {project.liveUrl && (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Live Demo
+                      </a>
+                    )}
+                    <Link
+                      href={"/projects/" + project.slug}
+                      className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-sm ml-auto"
+                    >
+                      View Details
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </section>
+
+      <Footer />
+    </main>
   );
 }

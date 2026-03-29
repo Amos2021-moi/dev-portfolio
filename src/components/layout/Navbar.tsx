@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, Code2, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { navItems, siteConfig } from "@/lib/config";
+import { navItems } from "@/lib/config";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 export default function Navbar() {
@@ -21,32 +21,38 @@ export default function Navbar() {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled
-          ? "backdrop-blur-md border-b shadow-sm"
-          : "bg-transparent"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        scrolled ? "border-b" : "bg-transparent border-transparent"
       )}
       style={{
-        backgroundColor: scrolled ? "color-mix(in srgb, var(--color-background) 80%, transparent)" : "transparent",
-        borderColor: "var(--color-border)",
+        backgroundColor: scrolled
+          ? "var(--color-background)"
+          : "transparent",
+        borderColor: scrolled
+          ? "var(--color-border)"
+          : "transparent",
+        boxShadow: scrolled
+          ? "0 1px 12px rgba(0,0,0,0.06)"
+          : "none",
       }}
     >
-      <div className="container-max section-padding py-0">
-        <div className="flex items-center justify-between h-16">
+      {/* Inner container — constrained width, comfortable padding */}
+      <div className="max-w-5xl mx-auto px-5 sm:px-8">
+        <div className="flex items-center justify-between h-14">
 
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-mono font-bold text-xl"
+            className="flex items-center gap-2 font-mono font-bold text-lg"
           >
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Code2 className="w-5 h-5 text-primary-foreground" />
+            <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
+              <Code2 className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="text-gradient">Mark.dev</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -57,10 +63,16 @@ export default function Navbar() {
               </Link>
             ))}
 
+            {/* Divider */}
+            <div
+              className="w-px h-4"
+              style={{ backgroundColor: "var(--color-border)" }}
+            />
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              className="p-1.5 rounded-md hover:bg-accent transition-colors"
               title="Toggle theme"
             >
               {theme === "dark" ? (
@@ -72,17 +84,17 @@ export default function Navbar() {
 
             <Link
               href="/admin"
-              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              className="bg-primary text-primary-foreground px-3.5 py-1.5 rounded-md text-sm font-medium hover:opacity-90 transition-opacity"
             >
               Dashboard
             </Link>
           </div>
 
           {/* Mobile Right */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              className="p-1.5 rounded-md hover:bg-accent transition-colors"
             >
               {theme === "dark" ? (
                 <Sun className="w-4 h-4" />
@@ -91,7 +103,7 @@ export default function Navbar() {
               )}
             </button>
             <button
-              className="p-2 rounded-lg hover:bg-accent transition-colors"
+              className="p-1.5 rounded-md hover:bg-accent transition-colors"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? (
@@ -110,24 +122,29 @@ export default function Navbar() {
             className="md:hidden py-4 border-t"
             style={{ borderColor: "var(--color-border)" }}
           >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium text-sm py-1"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
-              <Link
-                href="/admin"
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity w-fit"
-                onClick={() => setIsOpen(false)}
+              <div
+                className="pt-2 border-t"
+                style={{ borderColor: "var(--color-border)" }}
               >
-                Dashboard
-              </Link>
+                <Link
+                  href="/admin"
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity inline-block"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              </div>
             </div>
           </div>
         )}
