@@ -78,7 +78,31 @@ export async function GET() {
       Unknown: "#8b8b8b",
     };
 
+    // --- Added logic from other AI starts here ---
+    const contributionsRes = await fetch(
+      "https://github-contributions-api.jogruber.de/v4/" + GITHUB_USERNAME,
+      { headers }
+    );
+    let contributions: number[][] = Array.from({ length: 52 }, () =>
+      Array.from({ length: 7 }, () => 0)
+    );
+    if (contributionsRes.ok) {
+      const contribData = await contributionsRes.json();
+      if (contribData.contributions) {
+        const flat = contribData.contributions.slice(-364);
+        for (let i = 0; i < flat.length; i++) {
+          const week = Math.floor(i / 7);
+          const day = i % 7;
+          if (week < 52) {
+            contributions[week][day] = flat[i].count || 0;
+          }
+        }
+      }
+    }
+    // --- Added logic ends here ---
+
     return NextResponse.json({
+      contributions, // Added to return
       stats: {
         publicRepos: user.public_repos,
         followers: user.followers,

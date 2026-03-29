@@ -59,6 +59,20 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+// =========================================================
+// UPDATED SECTION: ADDED FOR PWA & APPLE ICON SUPPORT
+// =========================================================
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Mark.dev",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
+// =========================================================
 };
 
 export default function RootLayout({
@@ -76,12 +90,12 @@ export default function RootLayout({
         }}
       >
         <SessionProvider>
-  <ThemeProvider>
-    <AnalyticsProvider>
-      {children}
-    </AnalyticsProvider>
-  </ThemeProvider>
-</SessionProvider>
+          <ThemeProvider>
+            <AnalyticsProvider>
+              {children}
+            </AnalyticsProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

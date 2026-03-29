@@ -35,13 +35,8 @@ interface Language {
   color: string;
 }
 
-const contributionData = Array.from({ length: 52 }, (_, week) =>
-  Array.from({ length: 7 }, (_, day) => ({
-    week,
-    day,
-    count: Math.random() > 0.4 ? Math.floor(Math.random() * 5) : 0,
-  }))
-);
+// Default empty grid for loading state
+const emptyContributions = Array.from({ length: 52 }, () => Array(7).fill(0));
 
 function getContributionColor(count: number): string {
   if (count === 0) return "var(--color-muted)";
@@ -55,6 +50,8 @@ export default function GitHubStats() {
   const [stats, setStats] = useState<GitHubStats | null>(null);
   const [repos, setRepos] = useState<Repo[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  // --- UPDATED: State for real contributions ---
+  const [contributions, setContributions] = useState<number[][]>(emptyContributions);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,6 +61,8 @@ export default function GitHubStats() {
         if (data.stats) setStats(data.stats);
         if (data.topRepos) setRepos(data.topRepos);
         if (data.languages) setLanguages(data.languages);
+        // --- UPDATED: Set contributions from API ---
+        if (data.contributions) setContributions(data.contributions);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -165,41 +164,6 @@ export default function GitHubStats() {
           })}
         </motion.div>
 
-        {/* Languages */}
-        {languages.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="bg-background rounded-xl border p-6 mb-12"
-            style={{ borderColor: "var(--color-border)" }}
-          >
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              Top Languages
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {languages.map((lang) => (
-                <div
-                  key={lang.name}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm"
-                  style={{ borderColor: "var(--color-border)" }}
-                >
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: lang.color }}
-                  />
-                  <span className="font-medium">{lang.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {lang.count} {lang.count === 1 ? "repo" : "repos"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
         {/* Contribution Graph */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -214,14 +178,15 @@ export default function GitHubStats() {
             Contribution Activity
           </h3>
           <div className="flex gap-1 min-w-max">
-            {contributionData.map((week, wi) => (
+            {/* --- UPDATED: Mapping over the state variable 'contributions' --- */}
+            {contributions.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-1">
-                {week.map((day) => (
+                {week.map((count, di) => (
                   <div
-                    key={day.day}
+                    key={di}
                     className="w-3 h-3 rounded-sm transition-colors"
-                    style={{ backgroundColor: getContributionColor(day.count) }}
-                    title={day.count + " contributions"}
+                    style={{ backgroundColor: getContributionColor(count) }}
+                    title={count + " contributions"}
                   />
                 ))}
               </div>
