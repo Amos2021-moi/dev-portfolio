@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Settings, Save, User, Bell, Shield, Globe } from "lucide-react";
+import { Settings, Save, User, Bell, Shield, Globe, Loader2 } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [profile, setProfile] = useState({
@@ -23,45 +23,136 @@ export default function AdminSettingsPage() {
 
   const [siteSettings, setSiteSettings] = useState({
     siteName: "Mark Osiemo | Dev Portfolio",
-    siteUrl: "https://markdev.vercel.app",
+    siteUrl: "https://markosiemo.vercel.app",
     maintenanceMode: false,
     analyticsEnabled: true,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
+  const [password, setPassword] = useState({
+    current: "",
+    newPass: "",
+    confirm: "",
+  });
+
+  const [savingSection, setSavingSection] = useState<string | null>(null);
   const [savedSection, setSavedSection] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dangerAction, setDangerAction] = useState<string | null>(null);
+  const [dangerLoading, setDangerLoading] = useState(false);
+  const [dangerDone, setDangerDone] = useState<string | null>(null);
 
-  const handleSave = async (section: string) => {
-    setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
+  const showSuccess = (section: string) => {
     setSavedSection(section);
-    setTimeout(() => setSavedSection(null), 2000);
+    setTimeout(() => setSavedSection(null), 3000);
   };
 
-  const handleProfileChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setProfile((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleSaveProfile = async () => {
+    if (!profile.name || !profile.email) {
+      setErrors({ profile: "Name and email are required." });
+      return;
+    }
+    setSavingSection("profile");
+    setErrors({});
+    try {
+      await fetch("/api/settings/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      showSuccess("profile");
+    } catch {
+      setErrors({ profile: "Failed to save. Please try again." });
+    } finally {
+      setSavingSection(null);
+    }
   };
 
-  const handleSiteChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value, type } = e.target;
-    setSiteSettings((prev) => ({
-      ...prev,
-      [name]: type === "checkbox"
-        ? (e.target as HTMLInputElement).checked
-        : value,
-    }));
+  const handleSaveNotifications = async () => {
+    setSavingSection("notifications");
+    try {
+      await fetch("/api/settings/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notifications),
+      });
+      showSuccess("notifications");
+    } catch {
+      setErrors({ notifications: "Failed to save." });
+    } finally {
+      setSavingSection(null);
+    }
   };
 
-  const handleNotificationChange = (key: string) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key as keyof typeof prev],
-    }));
+  const handleSaveSite = async () => {
+    setSavingSection("site");
+    try {
+      await fetch("/api/settings/site", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(siteSettings),
+      });
+      showSuccess("site");
+    } catch {
+      setErrors({ site: "Failed to save." });
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!password.current || !password.newPass || !password.confirm) {
+      setErrors({ password: "All password fields are required." });
+      return;
+    }
+    if (password.newPass !== password.confirm) {
+      setErrors({ password: "New passwords do not match." });
+      return;
+    }
+    if (password.newPass.length < 8) {
+      setErrors({ password: "Password must be at least 8 characters." });
+      return;
+    }
+    setSavingSection("password");
+    setErrors({});
+    try {
+      const res = await fetch("/api/settings/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: password.current,
+          newPassword: password.newPass,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors({ password: data.error || "Failed to change password." });
+      } else {
+        showSuccess("password");
+        setPassword({ current: "", newPass: "", confirm: "" });
+      }
+    } catch {
+      setErrors({ password: "Failed to change password." });
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleDangerAction = async (action: string) => {
+    setDangerLoading(true);
+    try {
+      await fetch("/api/settings/danger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      setDangerDone(action);
+      setTimeout(() => setDangerDone(null), 3000);
+    } catch {
+      setErrors({ danger: "Action failed. Please try again." });
+    } finally {
+      setDangerLoading(false);
+      setDangerAction(null);
+    }
   };
 
   return (
@@ -90,70 +181,41 @@ export default function AdminSettingsPage() {
           Profile Information
         </h2>
 
+        {errors.profile && (
+          <p className="text-red-500 text-sm bg-red-500/10 px-3 py-2 rounded-lg">
+            {errors.profile}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={profile.name}
-              onChange={handleProfileChange}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={profile.email}
-              onChange={handleProfileChange}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Job Title</label>
-            <input
-              type="text"
-              name="title"
-              value={profile.title}
-              onChange={handleProfileChange}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">GitHub Username</label>
-            <input
-              type="text"
-              name="github"
-              value={profile.github}
-              onChange={handleProfileChange}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Location</label>
-            <input
-              type="text"
-              name="location"
-              value={profile.location}
-              onChange={handleProfileChange}
-              className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
-              style={{ borderColor: "var(--color-border)" }}
-            />
-          </div>
+          {[
+            { label: "Full Name", key: "name", type: "text", placeholder: "Mark Amos Osiemo" },
+            { label: "Email", key: "email", type: "email", placeholder: "email@example.com" },
+            { label: "Job Title", key: "title", type: "text", placeholder: "Full-Stack Developer" },
+            { label: "GitHub Username", key: "github", type: "text", placeholder: "username" },
+            { label: "Location", key: "location", type: "text", placeholder: "Kenya, East Africa" },
+          ].map((field) => (
+            <div key={field.key} className="space-y-2">
+              <label className="text-sm font-medium">{field.label}</label>
+              <input
+                type={field.type}
+                value={profile[field.key as keyof typeof profile]}
+                onChange={(e) =>
+                  setProfile((prev) => ({ ...prev, [field.key]: e.target.value }))
+                }
+                placeholder={field.placeholder}
+                className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
+                style={{ borderColor: "var(--color-border)" }}
+              />
+            </div>
+          ))}
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Bio</label>
           <textarea
-            name="bio"
             value={profile.bio}
-            onChange={handleProfileChange}
+            onChange={(e) => setProfile((prev) => ({ ...prev, bio: e.target.value }))}
             rows={3}
             className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none resize-none"
             style={{ borderColor: "var(--color-border)" }}
@@ -161,12 +223,71 @@ export default function AdminSettingsPage() {
         </div>
 
         <button
-          onClick={() => handleSave("profile")}
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          onClick={handleSaveProfile}
+          disabled={savingSection === "profile"}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
         >
-          <Save className="w-4 h-4" />
+          {savingSection === "profile" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
           {savedSection === "profile" ? "Saved!" : "Save Profile"}
+        </button>
+      </motion.div>
+
+      {/* Change Password */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="bg-background rounded-xl border p-6 space-y-4"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <h2 className="font-semibold flex items-center gap-2">
+          <Shield className="w-4 h-4 text-primary" />
+          Change Password
+        </h2>
+
+        {errors.password && (
+          <p className="text-red-500 text-sm bg-red-500/10 px-3 py-2 rounded-lg">
+            {errors.password}
+          </p>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: "Current Password", key: "current" },
+            { label: "New Password", key: "newPass" },
+            { label: "Confirm New Password", key: "confirm" },
+          ].map((field) => (
+            <div key={field.key} className="space-y-2">
+              <label className="text-sm font-medium">{field.label}</label>
+              <input
+                type="password"
+                value={password[field.key as keyof typeof password]}
+                onChange={(e) =>
+                  setPassword((prev) => ({ ...prev, [field.key]: e.target.value }))
+                }
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
+                style={{ borderColor: "var(--color-border)" }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handleChangePassword}
+          disabled={savingSection === "password"}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {savingSection === "password" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {savedSection === "password" ? "Password Changed!" : "Change Password"}
         </button>
       </motion.div>
 
@@ -186,8 +307,8 @@ export default function AdminSettingsPage() {
         <div className="space-y-3">
           {[
             { key: "emailMessages", label: "Email me when I receive a new message" },
-            { key: "emailComments", label: "Email me when someone comments on my project" },
-            { key: "emailNewsletter", label: "Send me newsletter performance reports" },
+            { key: "emailComments", label: "Email me when someone comments" },
+            { key: "emailNewsletter", label: "Send newsletter performance reports" },
             { key: "browserNotifications", label: "Enable browser push notifications" },
           ].map((item) => (
             <div
@@ -197,22 +318,25 @@ export default function AdminSettingsPage() {
             >
               <p className="text-sm">{item.label}</p>
               <button
-                onClick={() => handleNotificationChange(item.key)}
-                className="relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
+                onClick={() =>
+                  setNotifications((prev) => ({
+                    ...prev,
+                    [item.key]: !prev[item.key as keyof typeof prev],
+                  }))
+                }
+                className="relative w-11 h-6 rounded-full transition-colors duration-200"
                 style={{
-                  backgroundColor:
-                    notifications[item.key as keyof typeof notifications]
-                      ? "var(--color-primary)"
-                      : "var(--color-muted)",
+                  backgroundColor: notifications[item.key as keyof typeof notifications]
+                    ? "var(--color-primary)"
+                    : "var(--color-muted)",
                 }}
               >
                 <span
                   className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
                   style={{
-                    transform:
-                      notifications[item.key as keyof typeof notifications]
-                        ? "translateX(20px)"
-                        : "translateX(0)",
+                    transform: notifications[item.key as keyof typeof notifications]
+                      ? "translateX(20px)"
+                      : "translateX(0)",
                   }}
                 />
               </button>
@@ -221,11 +345,15 @@ export default function AdminSettingsPage() {
         </div>
 
         <button
-          onClick={() => handleSave("notifications")}
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          onClick={handleSaveNotifications}
+          disabled={savingSection === "notifications"}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
         >
-          <Save className="w-4 h-4" />
+          {savingSection === "notifications" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
           {savedSection === "notifications" ? "Saved!" : "Save Notifications"}
         </button>
       </motion.div>
@@ -248,9 +376,10 @@ export default function AdminSettingsPage() {
             <label className="text-sm font-medium">Site Name</label>
             <input
               type="text"
-              name="siteName"
               value={siteSettings.siteName}
-              onChange={handleSiteChange}
+              onChange={(e) =>
+                setSiteSettings((prev) => ({ ...prev, siteName: e.target.value }))
+              }
               className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
               style={{ borderColor: "var(--color-border)" }}
             />
@@ -259,9 +388,10 @@ export default function AdminSettingsPage() {
             <label className="text-sm font-medium">Site URL</label>
             <input
               type="url"
-              name="siteUrl"
               value={siteSettings.siteUrl}
-              onChange={handleSiteChange}
+              onChange={(e) =>
+                setSiteSettings((prev) => ({ ...prev, siteUrl: e.target.value }))
+              }
               className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none"
               style={{ borderColor: "var(--color-border)" }}
             />
@@ -270,8 +400,16 @@ export default function AdminSettingsPage() {
 
         <div className="space-y-3">
           {[
-            { key: "maintenanceMode", label: "Maintenance Mode", desc: "Hide the site from visitors while you make changes" },
-            { key: "analyticsEnabled", label: "Analytics Tracking", desc: "Track visitor behavior and page views" },
+            {
+              key: "maintenanceMode",
+              label: "Maintenance Mode",
+              desc: "Hide the site from visitors while you make changes",
+            },
+            {
+              key: "analyticsEnabled",
+              label: "Analytics Tracking",
+              desc: "Track visitor behavior and page views",
+            },
           ].map((item) => (
             <div
               key={item.key}
@@ -289,12 +427,11 @@ export default function AdminSettingsPage() {
                     [item.key]: !prev[item.key as keyof typeof prev],
                   }))
                 }
-                className="relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
+                className="relative w-11 h-6 rounded-full transition-colors duration-200"
                 style={{
-                  backgroundColor:
-                    siteSettings[item.key as keyof typeof siteSettings]
-                      ? "var(--color-primary)"
-                      : "var(--color-muted)",
+                  backgroundColor: siteSettings[item.key as keyof typeof siteSettings]
+                    ? "var(--color-primary)"
+                    : "var(--color-muted)",
                 }}
               >
                 <span
@@ -311,11 +448,15 @@ export default function AdminSettingsPage() {
         </div>
 
         <button
-          onClick={() => handleSave("site")}
-          disabled={isSaving}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+          onClick={handleSaveSite}
+          disabled={savingSection === "site"}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
         >
-          <Save className="w-4 h-4" />
+          {savingSection === "site" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
           {savedSection === "site" ? "Saved!" : "Save Site Settings"}
         </button>
       </motion.div>
@@ -335,15 +476,88 @@ export default function AdminSettingsPage() {
         <p className="text-sm text-muted-foreground">
           These actions are irreversible. Please proceed with caution.
         </p>
+
+        {errors.danger && (
+          <p className="text-red-500 text-sm bg-red-500/10 px-3 py-2 rounded-lg">
+            {errors.danger}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-3">
-          <button className="px-4 py-2.5 rounded-lg border border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors">
+          <button
+            onClick={() => setDangerAction("clear_analytics")}
+            className="px-4 py-2.5 rounded-lg border border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors"
+          >
             Clear All Analytics Data
           </button>
-          <button className="px-4 py-2.5 rounded-lg border border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors">
+          <button
+            onClick={() => setDangerAction("clear_messages")}
+            className="px-4 py-2.5 rounded-lg border border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors"
+          >
             Delete All Messages
           </button>
+          <button
+            onClick={() => setDangerAction("clear_subscribers")}
+            className="px-4 py-2.5 rounded-lg border border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-500/10 transition-colors"
+          >
+            Clear All Subscribers
+          </button>
         </div>
+
+        {dangerDone && (
+          <p className="text-green-500 text-sm bg-green-500/10 px-3 py-2 rounded-lg">
+            Action completed successfully!
+          </p>
+        )}
       </motion.div>
+
+      {/* Danger Confirmation Modal */}
+      {dangerAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl border p-6 max-w-sm w-full mx-4 shadow-xl"
+            style={{ borderColor: "var(--color-border)" }}
+          >
+            <h3 className="text-lg font-bold mb-2 text-red-500">
+              Are you sure?
+            </h3>
+            <p className="text-muted-foreground text-sm mb-2">
+              You are about to:
+            </p>
+            <p className="font-medium text-sm mb-6">
+              {dangerAction === "clear_analytics" && "Delete ALL analytics and visitor data permanently"}
+              {dangerAction === "clear_messages" && "Delete ALL contact messages permanently"}
+              {dangerAction === "clear_subscribers" && "Delete ALL newsletter subscribers permanently"}
+            </p>
+            <p className="text-xs text-muted-foreground mb-6">
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDangerAction(null)}
+                disabled={dangerLoading}
+                className="flex-1 px-4 py-2 rounded-lg border text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                style={{ borderColor: "var(--color-border)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDangerAction(dangerAction)}
+                disabled={dangerLoading}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {dangerLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Yes, Delete"
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   );
