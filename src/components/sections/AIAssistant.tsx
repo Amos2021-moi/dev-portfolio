@@ -24,7 +24,7 @@ export default function AIAssistant() {
       id: "1",
       role: "assistant",
       content:
-        "Hi! I am Mark's AI assistant. I can answer questions about his skills, projects, and experience. What would you like to know?",
+        "Hi! I am Mark's AI assistant powered by Google Gemini. I can answer any questions about his skills, projects, and experience. What would you like to know?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -34,39 +34,6 @@ export default function AIAssistant() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const getAIResponse = (question: string): string => {
-    const q = question.toLowerCase();
-
-    if (q.includes("skill") || q.includes("know") || q.includes("technology")) {
-      return "Mark is skilled in TypeScript, React, Next.js, Node.js, PostgreSQL, Prisma, Tailwind CSS, Python, Git, and Docker. He specializes in full-stack web development with a focus on modern JavaScript frameworks.";
-    }
-    if (q.includes("project") || q.includes("built") || q.includes("work")) {
-      return "Mark has built several impressive projects including a Dev Portfolio Platform, an AI Chat Application, an E-Commerce Dashboard, a Task Management App, a Weather Dashboard, and a URL Shortener Service. You can see all of them at /projects.";
-    }
-    if (q.includes("hire") || q.includes("available") || q.includes("freelance") || q.includes("job")) {
-      return "Yes! Mark is currently available for freelance work and open to full-time opportunities. You can reach him at amosmark2332@gmail.com or use the contact form on this site.";
-    }
-    if (q.includes("who") || q.includes("about") || q.includes("introduce")) {
-      return "Mark Amos Osiemo is a Computer Science student at South Eastern Kenya University (SEKU). He is passionate about building modern web applications and turning ideas into real digital products. Always learning, always building!";
-    }
-    if (q.includes("contact") || q.includes("email") || q.includes("reach")) {
-      return "You can contact Mark via email at amosmark2332@gmail.com or through the contact form at the bottom of this page. He usually responds within 24 hours.";
-    }
-    if (q.includes("github") || q.includes("code") || q.includes("repository")) {
-      return "You can find Mark's code on GitHub at github.com/AMOS2021-MOI. He has several open source projects there that you can explore and contribute to.";
-    }
-    if (q.includes("blog") || q.includes("write") || q.includes("article")) {
-      return "Mark writes about web development topics including Next.js, TypeScript, PostgreSQL, Tailwind CSS, and DevOps. Check out his blog at /blog for tutorials and insights.";
-    }
-    if (q.includes("education") || q.includes("study") || q.includes("university") || q.includes("school")) {
-      return "Mark is currently studying Computer Science at South Eastern Kenya University (SEKU) in Kenya. He combines his academic knowledge with hands-on project building.";
-    }
-    if (q.includes("stack") || q.includes("tech")) {
-      return "Mark's preferred tech stack is Next.js + TypeScript for the frontend, Node.js/Express for the backend, PostgreSQL with Prisma ORM for the database, and Tailwind CSS for styling. He deploys on Vercel with GitHub Actions for CI/CD.";
-    }
-    return "That is a great question! For more details about Mark, feel free to explore his portfolio or reach out directly at amosmark2332@gmail.com. You can also check his projects at /projects and his blog at /blog.";
-  };
 
   const handleSend = async (text?: string) => {
     const message = text || input.trim();
@@ -78,23 +45,45 @@ export default function AIAssistant() {
       content: message,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, 800 + Math.random() * 600)
-    );
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "chat",
+          messages: updatedMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
 
-    const response = getAIResponse(message);
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: response,
-    };
+      const data = await res.json();
 
-    setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(false);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.response || "Sorry I could not process that. Please try again.",
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "Sorry something went wrong. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -127,10 +116,7 @@ export default function AIAssistant() {
             }}
           >
             {/* Header */}
-            <div
-              className="flex items-center justify-between p-4 border-b bg-primary"
-              style={{ borderColor: "var(--color-border)" }}
-            >
+            <div className="flex items-center justify-between p-4 bg-primary">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-primary-foreground/20 rounded-full flex items-center justify-center">
                   <Bot className="w-5 h-5 text-primary-foreground" />
@@ -142,7 +128,7 @@ export default function AIAssistant() {
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
                     <p className="text-xs text-primary-foreground/70">
-                      Online
+                      Powered by Gemini
                     </p>
                   </div>
                 </div>
@@ -168,10 +154,7 @@ export default function AIAssistant() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={
-                    "flex gap-2 " +
-                    (message.role === "user" ? "flex-row-reverse" : "flex-row")
-                  }
+                  className={"flex gap-2 " + (message.role === "user" ? "flex-row-reverse" : "flex-row")}
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
@@ -189,7 +172,7 @@ export default function AIAssistant() {
                     )}
                   </div>
                   <div
-                    className="max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-relaxed"
+                    className="max-w-[75%] px-3 py-2 text-sm leading-relaxed"
                     style={{
                       backgroundColor:
                         message.role === "assistant"
@@ -272,7 +255,7 @@ export default function AIAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask me anything..."
+                placeholder="Ask me anything about Mark..."
                 className="flex-1 px-3 py-2 rounded-lg border bg-muted/50 text-sm focus:outline-none"
                 style={{ borderColor: "var(--color-border)" }}
               />

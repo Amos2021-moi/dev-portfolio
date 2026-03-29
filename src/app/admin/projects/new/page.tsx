@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Save } from "lucide-react";
+import { ArrowLeft, Plus, X, Save, Sparkles } from "lucide-react";
 
 const statusOptions = ["ACTIVE", "COMPLETED", "ARCHIVED"];
 
@@ -22,6 +22,7 @@ export default function NewProjectPage() {
   const [techStack, setTechStack] = useState<string[]>([]);
   const [techInput, setTechInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (
@@ -40,6 +41,38 @@ export default function NewProjectPage() {
 
   const removeTech = (tech: string) => {
     setTechStack((prev) => prev.filter((t) => t !== tech));
+  };
+
+  const generateDescription = async () => {
+    if (!formData.title) {
+      setError("Please enter a project title first.");
+      return;
+    }
+    setIsGenerating(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "project_summary",
+          prompt: formData.title,
+          context: techStack.length > 0
+            ? "Tech stack: " + techStack.join(", ")
+            : "",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.response) {
+        setFormData((prev) => ({ ...prev, description: data.response }));
+      }
+    } catch {
+      setError("Failed to generate description. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSave = async () => {
@@ -82,7 +115,9 @@ export default function NewProjectPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">New Project</h1>
-          <p className="text-muted-foreground text-sm mt-1">Add a new project to your portfolio</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Add a new project to your portfolio
+          </p>
         </div>
       </div>
 
@@ -92,12 +127,19 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        <div
+          className="bg-background rounded-xl border p-6 space-y-4"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           <h2 className="font-semibold">Basic Information</h2>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium">Project Title *</label>
+            <label className="text-sm font-medium">Project Title</label>
             <input
               type="text"
               name="title"
@@ -108,18 +150,39 @@ export default function NewProjectPage() {
               style={{ borderColor: "var(--color-border)" }}
             />
           </div>
+
           <div className="space-y-2">
-            <label className="text-sm font-medium">Short Description *</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Short Description</label>
+              <button
+                onClick={generateDescription}
+                disabled={isGenerating || !formData.title}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3 h-3" />
+                    Generate with AI
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="A brief description of your project..."
+              placeholder="A brief description or click Generate with AI..."
               rows={3}
               className="w-full px-4 py-3 rounded-lg border bg-muted/50 text-sm focus:outline-none resize-none"
               style={{ borderColor: "var(--color-border)" }}
             />
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Full Content</label>
             <textarea
@@ -134,7 +197,10 @@ export default function NewProjectPage() {
           </div>
         </div>
 
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="bg-background rounded-xl border p-6 space-y-4"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           <h2 className="font-semibold">Links</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -164,7 +230,10 @@ export default function NewProjectPage() {
           </div>
         </div>
 
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="bg-background rounded-xl border p-6 space-y-4"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           <h2 className="font-semibold">Tech Stack</h2>
           <div className="flex gap-2">
             <input
@@ -192,7 +261,10 @@ export default function NewProjectPage() {
                   className="flex items-center gap-1.5 bg-muted text-muted-foreground px-3 py-1.5 rounded-lg text-sm font-mono"
                 >
                   {tech}
-                  <button onClick={() => removeTech(tech)} className="hover:text-foreground transition-colors">
+                  <button
+                    onClick={() => removeTech(tech)}
+                    className="hover:text-foreground transition-colors"
+                  >
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -201,7 +273,10 @@ export default function NewProjectPage() {
           )}
         </div>
 
-        <div className="bg-background rounded-xl border p-6 space-y-4" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="bg-background rounded-xl border p-6 space-y-4"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           <h2 className="font-semibold">Settings</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -228,10 +303,15 @@ export default function NewProjectPage() {
                   type="checkbox"
                   id="featured"
                   checked={formData.featured}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, featured: e.target.checked }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, featured: e.target.checked }))
+                  }
                   className="w-4 h-4 accent-primary"
                 />
-                <label htmlFor="featured" className="text-sm text-muted-foreground cursor-pointer">
+                <label
+                  htmlFor="featured"
+                  className="text-sm text-muted-foreground cursor-pointer"
+                >
                   Show on homepage
                 </label>
               </div>
@@ -265,7 +345,6 @@ export default function NewProjectPage() {
             Cancel
           </Link>
         </div>
-
       </motion.div>
     </div>
   );
