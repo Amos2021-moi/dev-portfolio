@@ -7,83 +7,130 @@ import {
   MessageSquare,
   Eye,
   TrendingUp,
-  Users,
   ArrowUpRight,
   ArrowDownRight,
   Activity,
 } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
-const stats = [
-  {
-    label: "Total Projects",
-    value: "12",
-    change: "+2 this month",
-    trend: "up",
-    icon: FolderKanban,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
-    href: "/admin/projects",
-  },
-  {
-    label: "Blog Posts",
-    value: "8",
-    change: "+1 this week",
-    trend: "up",
-    icon: FileText,
-    color: "text-green-500",
-    bg: "bg-green-500/10",
-    href: "/admin/blog",
-  },
-  {
-    label: "Messages",
-    value: "24",
-    change: "+5 today",
-    trend: "up",
-    icon: MessageSquare,
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-    href: "/admin/messages",
-  },
-  {
-    label: "Total Views",
-    value: "3.2k",
-    change: "-3% this week",
-    trend: "down",
-    icon: Eye,
-    color: "text-orange-500",
-    bg: "bg-orange-500/10",
-    href: "/admin",
-  },
-];
+interface Project {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  views: number;
+  createdAt: string;
+}
 
-const recentProjects = [
-  { title: "Dev Portfolio Platform", status: "Active", views: 340, date: "2024-01-01" },
-  { title: "AI Chat Application", status: "Completed", views: 210, date: "2023-11-15" },
-  { title: "E-Commerce Dashboard", status: "Completed", views: 520, date: "2023-09-20" },
-  { title: "Task Management App", status: "Active", views: 180, date: "2023-08-10" },
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  published: boolean;
+  views: number;
+  createdAt: string;
+}
 
-const recentMessages = [
-  { name: "John Doe", email: "john@example.com", subject: "Project Collaboration", date: "2024-01-20" },
-  { name: "Jane Smith", email: "jane@example.com", subject: "Freelance Work", date: "2024-01-19" },
-  { name: "Bob Johnson", email: "bob@example.com", subject: "Job Opportunity", date: "2024-01-18" },
-];
+interface Message {
+  id: string;
+  data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  };
+  createdAt: string;
+}
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+interface AnalyticsData {
+  total: number;
+  last30Days: number;
+  last7Days: number;
+  today: number;
+}
 
 export default function AdminDashboard() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/projects").then((r) => r.json()),
+      fetch("/api/blog").then((r) => r.json()),
+      fetch("/api/contact").then((r) => r.json()),
+      fetch("/api/analytics").then((r) => r.json()),
+    ])
+      .then(([projectsData, postsData, messagesData, analyticsData]) => {
+        setProjects(Array.isArray(projectsData) ? projectsData : []);
+        setPosts(Array.isArray(postsData) ? postsData : []);
+        setMessages(Array.isArray(messagesData) ? messagesData : []);
+        setAnalytics(analyticsData);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const stats = [
+    {
+      label: "Total Projects",
+      value: projects.length.toString(),
+      change: projects.filter((p) => p.status === "ACTIVE").length + " active",
+      trend: "up",
+      icon: FolderKanban,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      href: "/admin/projects",
+    },
+    {
+      label: "Blog Posts",
+      value: posts.length.toString(),
+      change: posts.filter((p) => p.published).length + " published",
+      trend: "up",
+      icon: FileText,
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+      href: "/admin/blog",
+    },
+    {
+      label: "Messages",
+      value: messages.length.toString(),
+      change: "Total received",
+      trend: "up",
+      icon: MessageSquare,
+      color: "text-purple-500",
+      bg: "bg-purple-500/10",
+      href: "/admin/messages",
+    },
+    {
+      label: "Total Views",
+      value: analytics
+        ? analytics.total > 999
+          ? (analytics.total / 1000).toFixed(1) + "k"
+          : analytics.total.toString()
+        : "0",
+      change: "Today: " + (analytics?.today ?? 0),
+      trend: "up",
+      icon: Eye,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+      href: "/admin/analytics",
+    },
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
     <div className="space-y-8">
 
@@ -117,7 +164,11 @@ export default function AdminDashboard() {
                     </div>
                     <Activity className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                  <p className="text-2xl font-bold mb-1">{stat.value}</p>
+                  {loading ? (
+                    <div className="h-8 w-16 bg-muted rounded animate-pulse mb-1" />
+                  ) : (
+                    <p className="text-2xl font-bold mb-1">{stat.value}</p>
+                  )}
                   <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
                   <div className="flex items-center gap-1">
                     {stat.trend === "up" ? (
@@ -125,10 +176,7 @@ export default function AdminDashboard() {
                     ) : (
                       <ArrowDownRight className="w-3 h-3 text-red-500" />
                     )}
-                    <span
-                      className="text-xs"
-                      style={{ color: stat.trend === "up" ? "rgb(34 197 94)" : "rgb(239 68 68)" }}
-                    >
+                    <span className="text-xs text-muted-foreground">
                       {stat.change}
                     </span>
                   </div>
@@ -167,77 +215,167 @@ export default function AdminDashboard() {
             </Link>
           </div>
           <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-            {recentProjects.map((project) => (
-              <div
-                key={project.title}
-                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                </div>
+              ))
+            ) : projects.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                No projects yet.{" "}
+                <Link href="/admin/projects/new" className="text-primary hover:opacity-80">
+                  Add one
+                </Link>
+              </div>
+            ) : (
+              projects.slice(0, 4).map((project) => (
+                <div
+                  key={project.id}
+                  className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{project.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(project.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Eye className="w-3 h-3" />
+                      {project.views}
+                    </span>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor:
+                          project.status === "ACTIVE"
+                            ? "rgb(34 197 94 / 0.1)"
+                            : "rgb(59 130 246 / 0.1)",
+                        color:
+                          project.status === "ACTIVE"
+                            ? "rgb(34 197 94)"
+                            : "rgb(59 130 246)",
+                      }}
+                    >
+                      {project.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
+        {/* Recent Messages */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-background rounded-xl border"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          <div
+            className="flex items-center justify-between p-6 border-b"
+            style={{ borderColor: "var(--color-border)" }}
+          >
+            <h2 className="font-semibold flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              Recent Messages
+            </h2>
+            <Link
+              href="/admin/messages"
+              className="text-xs text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              View All
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                </div>
+              ))
+            ) : messages.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                No messages yet. Share your portfolio to get contacts!
+              </div>
+            ) : (
+              messages.slice(0, 4).map((message) => (
+                <div
+                  key={message.id}
+                  className="flex items-start justify-between p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-bold flex-shrink-0">
+                      {message.data?.name?.charAt(0) || "?"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {message.data?.name || "Unknown"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {message.data?.subject || "No subject"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex-shrink-0">
+                    {new Date(message.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
+      </div>
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-background rounded-xl border p-6"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <h2 className="font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-primary" />
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { href: "/admin/projects/new", icon: FolderKanban, label: "New Project" },
+            { href: "/admin/blog/new", icon: FileText, label: "New Post" },
+            { href: "/admin/messages", icon: MessageSquare, label: "Messages" },
+            { href: "/admin/analytics", icon: Eye, label: "Analytics" },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-all text-center"
+                style={{ borderColor: "var(--color-border)" }}
               >
-                <div>
-                  <p className="text-sm font-medium">{project.title}</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                      {new Date(project.date).toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                      })}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                      <p className="text-sm font-medium">{project.views} views</p>
-                                      <span className={`text-xs px-2 py-1 rounded-full ${project.status === "Active" ? "bg-green-500/10 text-green-700" : "bg-gray-500/10 text-gray-700"}`}>
-                                        {project.status}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                  
-                          {/* Recent Messages */}
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="bg-background rounded-xl border"
-                            style={{ borderColor: "var(--color-border)" }}
-                          >
-                            <div
-                              className="flex items-center justify-between p-6 border-b"
-                              style={{ borderColor: "var(--color-border)" }}
-                            >
-                              <h2 className="font-semibold flex items-center gap-2">
-                                <MessageSquare className="w-4 h-4 text-primary" />
-                                Recent Messages
-                              </h2>
-                              <Link
-                                href="/admin/messages"
-                                className="text-xs text-primary hover:opacity-80 transition-opacity flex items-center gap-1"
-                              >
-                                View All
-                                <ArrowUpRight className="w-3 h-3" />
-                              </Link>
-                            </div>
-                            <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-                              {recentMessages.map((message) => (
-                                <div
-                                  key={message.email}
-                                  className="p-4 hover:bg-muted/50 transition-colors"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <p className="text-sm font-medium">{message.name}</p>
-                                      <p className="text-xs text-muted-foreground">{message.email}</p>
-                                      <p className="text-xs text-muted-foreground mt-1">{message.subject}</p>
-                                    </div>
-                                    <span className="text-xs text-muted-foreground">{message.date}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        </div>
-                      </div>
-                    );
-                  }
+                <Icon className="w-6 h-6 text-primary" />
+                <span className="text-xs font-medium">{action.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </motion.div>
+
+    </div>
+  );
+}
