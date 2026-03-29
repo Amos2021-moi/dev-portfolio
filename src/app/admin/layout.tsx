@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -26,6 +26,7 @@ const sidebarItems = [
   { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
+
 export default function AdminLayout({
   children,
 }: {
@@ -33,6 +34,7 @@ export default function AdminLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -42,10 +44,24 @@ export default function AdminLayout({
     await signOut({ callbackUrl: "/admin/login" });
   };
 
+  // If on login page OR not authenticated yet — show plain layout with no sidebar
+  const isLoginPage = pathname === "/admin/login";
+  const isLoading = status === "loading";
+
+  if (isLoginPage || isLoading) {
+    return <>{children}</>;
+  }
+
+  // Not logged in — show nothing while redirecting
+  if (status === "unauthenticated") {
+    return null;
+  }
+
+  // Logged in — show full dashboard with sidebar
   return (
     <div className="min-h-screen bg-background flex">
 
-      {/* Mobile Overlay — sits behind sidebar */}
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -53,9 +69,9 @@ export default function AdminLayout({
         />
       )}
 
-      {/* Sidebar */}
+      {/* Mobile Sidebar */}
       <aside
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex flex-col"
+        className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex flex-col lg:hidden"
         style={{
           borderColor: "var(--color-border)",
           transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
@@ -114,7 +130,9 @@ export default function AdminLayout({
               M
             </div>
             <div>
-              <p className="text-sm font-medium">Mark Osiemo</p>
+              <p className="text-sm font-medium">
+                {session?.user?.name || "Mark Osiemo"}
+              </p>
               <p className="text-xs text-muted-foreground">Admin</p>
             </div>
           </div>
@@ -128,7 +146,7 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Desktop Sidebar — always visible on large screens */}
+      {/* Desktop Sidebar */}
       <aside
         className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex-col"
         style={{ borderColor: "var(--color-border)" }}
@@ -178,7 +196,9 @@ export default function AdminLayout({
               M
             </div>
             <div>
-              <p className="text-sm font-medium">Mark Osiemo</p>
+              <p className="text-sm font-medium">
+                {session?.user?.name || "Mark Osiemo"}
+              </p>
               <p className="text-xs text-muted-foreground">Admin</p>
             </div>
           </div>
@@ -210,7 +230,9 @@ export default function AdminLayout({
           <div className="hidden lg:block">
             <p className="text-sm text-muted-foreground">
               Welcome back,{" "}
-              <span className="text-foreground font-medium">Mark</span>
+              <span className="text-foreground font-medium">
+                {session?.user?.name?.split(" ")[0] || "Mark"}
+              </span>
             </p>
           </div>
 
