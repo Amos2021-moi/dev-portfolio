@@ -15,6 +15,7 @@ import {
   X,
   Code2,
   Bell,
+  BarChart2,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -22,9 +23,9 @@ const sidebarItems = [
   { label: "Projects", href: "/admin/projects", icon: FolderKanban },
   { label: "Blog Posts", href: "/admin/blog", icon: FileText },
   { label: "Messages", href: "/admin/messages", icon: MessageSquare },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
-
 export default function AdminLayout({
   children,
 }: {

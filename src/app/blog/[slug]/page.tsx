@@ -1,121 +1,25 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ArrowLeft, Clock, Eye, Calendar, Tag } from "lucide-react";
+import { useViewCounter } from "@/hooks/useViewCounter";
 
-const posts: Record<string, {
+interface BlogPost {
+  id: string;
   title: string;
+  slug: string;
   excerpt: string;
   content: string;
   tags: string[];
   readingTime: string;
   views: number;
-  date: string;
-  color: string;
-}> = {
-  "getting-started-with-nextjs": {
-    title: "Getting Started with Next.js 14 App Router",
-    excerpt: "A comprehensive guide to building modern web applications with Next.js 14.",
-    content: `
-## Introduction
-
-Next.js 14 introduced a revolutionary new way to build React applications with the App Router. This guide will walk you through everything you need to know to get started.
-
-## What is the App Router?
-
-The App Router is a new paradigm for building Next.js applications. It uses React Server Components by default, which means your components render on the server and send minimal JavaScript to the client.
-
-## Setting Up Your Project
-
-To create a new Next.js 14 project, run the following command:
-
-\`\`\`bash
-npx create-next-app@latest my-app --typescript --tailwind --app
-\`\`\`
-
-## File Based Routing
-
-With the App Router, routing is based on the file system. Here is how it works:
-
-- \`app/page.tsx\` → renders at \`/\`
-- \`app/about/page.tsx\` → renders at \`/about\`
-- \`app/blog/[slug]/page.tsx\` → renders at \`/blog/:slug\`
-
-## Server Components vs Client Components
-
-By default, all components in the App Router are Server Components. To use client-side features like useState or useEffect, add the "use client" directive at the top of your file.
-
-\`\`\`tsx
-"use client";
-import { useState } from "react";
-
-export default function Counter() {
-  const [count, setCount] = useState(0);
-  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+  published: boolean;
+  createdAt: string;
 }
-\`\`\`
-
-## Conclusion
-
-The Next.js App Router is a powerful tool for building modern web applications. With Server Components, file-based routing, and built-in optimizations, it is the best way to build React apps today.
-    `,
-    tags: ["Next.js", "React", "TypeScript"],
-    readingTime: "8 min read",
-    views: 1240,
-    date: "2024-01-15",
-    color: "from-blue-500 to-purple-500",
-  },
-  "mastering-tailwind-css": {
-    title: "Mastering Tailwind CSS for Modern UI Design",
-    excerpt: "Deep dive into Tailwind CSS utility classes, custom configurations, and animations.",
-    content: `
-## Why Tailwind CSS?
-
-Tailwind CSS is a utility-first CSS framework that allows you to build modern designs directly in your markup. Instead of writing custom CSS, you compose designs using predefined utility classes.
-
-## Core Concepts
-
-### Utility Classes
-
-Tailwind provides thousands of utility classes for every CSS property:
-
-\`\`\`html
-<div class="flex items-center justify-between p-4 bg-white rounded-lg shadow">
-  <h2 class="text-xl font-bold text-gray-900">Hello World</h2>
-  <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-    Click Me
-  </button>
-</div>
-\`\`\`
-
-### Responsive Design
-
-Tailwind makes responsive design simple with breakpoint prefixes:
-
-\`\`\`html
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-  <!-- Responsive grid -->
-</div>
-\`\`\`
-
-## Custom Configuration
-
-You can customize Tailwind by editing the tailwind.config.ts file to add custom colors, fonts, spacing, and more.
-
-## Conclusion
-
-Tailwind CSS is a game changer for web development. Once you learn the utility classes, you can build beautiful UIs faster than ever before.
-    `,
-    tags: ["Tailwind CSS", "CSS", "Design"],
-    readingTime: "6 min read",
-    views: 980,
-    date: "2024-01-22",
-    color: "from-cyan-500 to-blue-500",
-  },
-};
 
 function renderContent(content: string) {
   const lines = content.trim().split("\n");
@@ -136,6 +40,12 @@ function renderContent(content: string) {
         <h3 key={i} className="text-xl font-bold mt-6 mb-3">
           {line.replace("### ", "")}
         </h3>
+      );
+    } else if (line.startsWith("# ")) {
+      elements.push(
+        <h1 key={i} className="text-3xl font-bold mt-8 mb-4">
+          {line.replace("# ", "")}
+        </h1>
       );
     } else if (line.startsWith("```")) {
       const codeLines: string[] = [];
@@ -159,6 +69,12 @@ function renderContent(content: string) {
           {line.replace("- ", "")}
         </li>
       );
+    } else if (line.startsWith("**") && line.endsWith("**")) {
+      elements.push(
+        <p key={i} className="font-bold mb-2">
+          {line.replace(/\*\*/g, "")}
+        </p>
+      );
     } else if (line.trim() !== "") {
       elements.push(
         <p key={i} className="text-muted-foreground leading-relaxed mb-4">
@@ -177,16 +93,58 @@ export default function BlogPostPage({
 }: {
   params: { slug: string };
 }) {
-  const post = posts[params.slug as keyof typeof posts];
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!post) {
+  useViewCounter("blog", post?.id);
+
+  useEffect(() => {
+    fetch("/api/blog")
+      .then((res) => res.json())
+      .then((data) => {
+        const found = Array.isArray(data)
+          ? data.find((p: BlogPost) => p.slug === params.slug)
+          : null;
+        if (found) {
+          setPost(found);
+        } else {
+          setNotFound(true);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setNotFound(true);
+        setLoading(false);
+      });
+  }, [params.slug]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container-max px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-4xl">
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-muted rounded w-24" />
+            <div className="h-10 bg-muted rounded w-3/4" />
+            <div className="h-4 bg-muted rounded w-full" />
+            <div className="h-4 bg-muted rounded w-5/6" />
+            <div className="h-4 bg-muted rounded w-4/6" />
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  if (notFound || !post) {
     return (
       <main className="min-h-screen bg-background">
         <Navbar />
         <div className="container-max section-padding pt-32 text-center">
           <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
           <p className="text-muted-foreground mb-8">
-            The blog post you are looking for does not exist.
+            The blog post you are looking for does not exist yet.
           </p>
           <Link
             href="/blog"
@@ -229,12 +187,8 @@ export default function BlogPostPage({
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          {/* Gradient Bar */}
-          <div
-            className={"h-1 w-24 rounded-full bg-gradient-to-r mb-6 " + post.color}
-          />
+          <div className="h-1 w-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 mb-6" />
 
-          {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4">
             {post.tags.map((tag) => (
               <span
@@ -248,36 +202,37 @@ export default function BlogPostPage({
             ))}
           </div>
 
-          {/* Title */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
             {post.title}
           </h1>
 
-          {/* Excerpt */}
-          <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-            {post.excerpt}
-          </p>
+          {post.excerpt && (
+            <p className="text-muted-foreground text-lg leading-relaxed mb-6">
+              {post.excerpt}
+            </p>
+          )}
 
-          {/* Meta */}
           <div
             className="flex flex-wrap items-center gap-6 py-4 border-t border-b text-sm text-muted-foreground"
             style={{ borderColor: "var(--color-border)" }}
           >
             <span className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              {new Date(post.date).toLocaleDateString("en-US", {
+              {new Date(post.createdAt).toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
               })}
             </span>
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              {post.readingTime}
-            </span>
+            {post.readingTime && (
+              <span className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {post.readingTime}
+              </span>
+            )}
             <span className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
-              {post.views.toLocaleString()} views
+              {post.views} views
             </span>
           </div>
         </motion.div>

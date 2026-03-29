@@ -4,6 +4,7 @@ import "./globals.css";
 import { siteConfig } from "@/lib/config";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
+import AnalyticsProvider from "@/components/providers/AnalyticsProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -75,8 +76,12 @@ export default function RootLayout({
         }}
       >
         <SessionProvider>
-          <ThemeProvider>{children}</ThemeProvider>
-        </SessionProvider>
+  <ThemeProvider>
+    <AnalyticsProvider>
+      {children}
+    </AnalyticsProvider>
+  </ThemeProvider>
+</SessionProvider>
       </body>
     </html>
   );
