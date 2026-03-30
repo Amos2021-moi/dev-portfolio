@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Settings, Save, User, Bell, Shield, Globe, Loader2 } from "lucide-react";
+import { Settings, Save, User, Bell, Shield, Globe, Loader2, FileText, Upload, Download, Trash2 } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [profile, setProfile] = useState({
@@ -40,6 +40,19 @@ export default function AdminSettingsPage() {
   const [dangerAction, setDangerAction] = useState<string | null>(null);
   const [dangerLoading, setDangerLoading] = useState(false);
   const [dangerDone, setDangerDone] = useState<string | null>(null);
+const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+const [resumeUploading, setResumeUploading] = useState(false);
+const [resumeSuccess, setResumeSuccess] = useState(false);
+const [resumeError, setResumeError] = useState("");
+
+useEffect(() => {
+  fetch("/api/resume")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.exists) setResumeUrl(data.url);
+    })
+    .catch(() => {});
+}, []);
 
   const showSuccess = (section: string) => {
     setSavedSection(section);
@@ -461,6 +474,168 @@ export default function AdminSettingsPage() {
         </button>
       </motion.div>
 
+{/* Resume Upload */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.25 }}
+  className="bg-background rounded-xl border p-6 space-y-4"
+  style={{ borderColor: "var(--color-border)" }}
+>
+  <h2 className="font-semibold flex items-center gap-2">
+    <FileText className="w-4 h-4 text-primary" />
+    Resume / CV
+  </h2>
+  <p className="text-sm text-muted-foreground">
+    Upload your resume PDF. Visitors can download it from your portfolio homepage.
+  </p>
+
+  {resumeError && (
+    <p className="text-red-500 text-sm bg-red-500/10 px-3 py-2 rounded-lg">
+      {resumeError}
+    </p>
+  )}
+
+  {resumeUrl && (
+    <div
+      className="flex items-center justify-between p-4 rounded-lg border"
+      style={{ borderColor: "var(--color-border)" }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
+          <FileText className="w-5 h-5 text-red-500" />
+        </div>
+        <div>
+          <p className="text-sm font-medium">Resume uploaded</p>
+          <p className="text-xs text-muted-foreground">PDF · Ready for download</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <a
+          href={resumeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border hover:bg-accent transition-colors"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          <Download className="w-3 h-3" />
+          Preview
+        </a>
+        <button
+          onClick={() => setResumeUrl(null)}
+          className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-500"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )}
+
+  <div
+    className="border-2 border-dashed rounded-xl p-8 text-center transition-colors"
+    style={{ borderColor: "var(--color-border)" }}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={async (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const input = document.createElement("input");
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        const fakeEvent = { target: { files: dt.files } } as unknown as React.ChangeEvent<HTMLInputElement>;
+        const handleUpload = async (f: File) => {
+          if (f.type !== "application/pdf") {
+            setResumeError("Only PDF files are allowed.");
+            return;
+          }
+          setResumeUploading(true);
+          setResumeError("");
+          const formData = new FormData();
+          formData.append("resume", f);
+          try {
+            const res = await fetch("/api/resume", { method: "POST", body: formData });
+            const data = await res.json();
+            if (!res.ok) {
+              setResumeError(data.error || "Upload failed.");
+            } else {
+              setResumeUrl(data.url);
+              setResumeSuccess(true);
+              setTimeout(() => setResumeSuccess(false), 3000);
+            }
+          } catch {
+            setResumeError("Upload failed. Please try again.");
+          } finally {
+            setResumeUploading(false);
+          }
+        };
+        handleUpload(file);
+      }
+    }}
+  >
+    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+    <p className="text-sm font-medium mb-1">
+      Drag and drop your resume PDF here
+    </p>
+    <p className="text-xs text-muted-foreground mb-4">
+      PDF only · Max 5MB
+    </p>
+    <label className="cursor-pointer">
+      <span className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity inline-flex mx-auto w-fit">
+        {resumeUploading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Uploading...
+          </>
+        ) : resumeSuccess ? (
+          <>
+            <Save className="w-4 h-4" />
+            Uploaded!
+          </>
+        ) : (
+          <>
+            <Upload className="w-4 h-4" />
+            Choose PDF File
+          </>
+        )}
+      </span>
+      <input
+        type="file"
+        accept=".pdf"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          if (file.type !== "application/pdf") {
+            setResumeError("Only PDF files are allowed.");
+            return;
+          }
+          setResumeUploading(true);
+          setResumeError("");
+          const formData = new FormData();
+          formData.append("resume", file);
+          try {
+            const res = await fetch("/api/resume", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await res.json();
+            if (!res.ok) {
+              setResumeError(data.error || "Upload failed.");
+            } else {
+              setResumeUrl(data.url);
+              setResumeSuccess(true);
+              setTimeout(() => setResumeSuccess(false), 3000);
+            }
+          } catch {
+            setResumeError("Upload failed. Please try again.");
+          } finally {
+            setResumeUploading(false);
+          }
+        }}
+      />
+    </label>
+  </div>
+</motion.div>
       {/* Danger Zone */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

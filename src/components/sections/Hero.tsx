@@ -105,6 +105,32 @@ function ParticleBackground() {
   );
 }
 
+function ResumeButton() {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/resume")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.exists) setUrl(data.url);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!url) return null;
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+    >
+      <Download className="w-4 h-4" />
+      Resume
+    </a>
+  );
+}
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -262,14 +288,7 @@ export default function Hero() {
                 Email
               </a>
               <span className="text-muted-foreground">·</span>
-              <a
-                href="/resume.pdf"
-                download
-                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Resume
-              </a>
+              <ResumeButton />
             </motion.div>
           </motion.div>
 
