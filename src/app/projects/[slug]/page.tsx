@@ -6,7 +6,6 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ArrowLeft, ExternalLink, GitBranch, Star, Calendar, Eye } from "lucide-react";
-import { useViewCounter } from "@/hooks/useViewCounter";
 
 interface Project {
   id: string;
@@ -33,20 +32,14 @@ export default function ProjectPage({
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  useViewCounter("project", project?.id);
-
   useEffect(() => {
-    fetch("/api/projects")
-      .then((res) => res.json())
+    fetch("/api/projects?slug=" + params.slug)
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
       .then((data) => {
-        const found = Array.isArray(data)
-          ? data.find((p: Project) => p.slug === params.slug)
-          : null;
-        if (found) {
-          setProject(found);
-        } else {
-          setNotFound(true);
-        }
+        setProject(data);
         setLoading(false);
       })
       .catch(() => {
@@ -59,7 +52,7 @@ export default function ProjectPage({
     return (
       <main className="min-h-screen bg-background">
         <Navbar />
-        <div className="container-max px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-4xl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
           <div className="space-y-4 animate-pulse">
             <div className="h-4 bg-muted rounded w-24" />
             <div className="h-10 bg-muted rounded w-3/4" />
@@ -76,17 +69,18 @@ export default function ProjectPage({
     return (
       <main className="min-h-screen bg-background">
         <Navbar />
-        <div className="container-max section-padding pt-32 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 text-center">
+          <div className="text-6xl mb-6">🔍</div>
           <h1 className="text-4xl font-bold mb-4">Project Not Found</h1>
-          <p className="text-muted-foreground mb-8">
-            The project you are looking for does not exist yet.
+          <p className="text-muted-foreground mb-8 text-lg">
+            This project does not exist or has been removed.
           </p>
           <Link
             href="/projects"
-            className="text-primary hover:opacity-80 transition-opacity flex items-center gap-2 justify-center"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Projects
+            View All Projects
           </Link>
         </div>
         <Footer />
@@ -98,9 +92,9 @@ export default function ProjectPage({
     <main className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container-max px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-4xl">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
 
-        {/* Back Button */}
+        {/* Back */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -128,14 +122,12 @@ export default function ProjectPage({
             <span
               className="text-xs font-medium px-3 py-1 rounded-full"
               style={{
-                backgroundColor:
-                  project.status === "ACTIVE"
-                    ? "rgb(34 197 94 / 0.1)"
-                    : "rgb(59 130 246 / 0.1)",
-                color:
-                  project.status === "ACTIVE"
-                    ? "rgb(34 197 94)"
-                    : "rgb(59 130 246)",
+                backgroundColor: project.status === "ACTIVE"
+                  ? "rgb(34 197 94 / 0.1)"
+                  : "rgb(59 130 246 / 0.1)",
+                color: project.status === "ACTIVE"
+                  ? "rgb(34 197 94)"
+                  : "rgb(59 130 246)",
               }}
             >
               {project.status}
@@ -218,7 +210,7 @@ export default function ProjectPage({
         )}
 
         {/* Tech Stack */}
-        {project.techStack.length > 0 && (
+        {project.techStack && project.techStack.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -240,7 +232,7 @@ export default function ProjectPage({
           </motion.div>
         )}
 
-        {/* Footer CTA */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

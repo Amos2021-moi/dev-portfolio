@@ -6,7 +6,6 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ArrowLeft, Clock, Eye, Calendar, Tag } from "lucide-react";
-import { useViewCounter } from "@/hooks/useViewCounter";
 
 interface BlogPost {
   id: string;
@@ -28,7 +27,6 @@ function renderContent(content: string) {
 
   while (i < lines.length) {
     const line = lines[i];
-
     if (line.startsWith("## ")) {
       elements.push(
         <h2 key={i} className="text-2xl font-bold mt-8 mb-4">
@@ -58,7 +56,6 @@ function renderContent(content: string) {
         <pre
           key={i}
           className="bg-muted rounded-lg p-4 overflow-x-auto my-4 text-sm font-mono"
-          style={{ borderColor: "var(--color-border)" }}
         >
           <code>{codeLines.join("\n")}</code>
         </pre>
@@ -69,12 +66,6 @@ function renderContent(content: string) {
           {line.replace("- ", "")}
         </li>
       );
-    } else if (line.startsWith("**") && line.endsWith("**")) {
-      elements.push(
-        <p key={i} className="font-bold mb-2">
-          {line.replace(/\*\*/g, "")}
-        </p>
-      );
     } else if (line.trim() !== "") {
       elements.push(
         <p key={i} className="text-muted-foreground leading-relaxed mb-4">
@@ -84,7 +75,6 @@ function renderContent(content: string) {
     }
     i++;
   }
-
   return elements;
 }
 
@@ -97,20 +87,14 @@ export default function BlogPostPage({
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  useViewCounter("blog", post?.id);
-
   useEffect(() => {
-    fetch("/api/blog")
-      .then((res) => res.json())
+    fetch("/api/blog?slug=" + params.slug)
+      .then((res) => {
+        if (!res.ok) throw new Error("Not found");
+        return res.json();
+      })
       .then((data) => {
-        const found = Array.isArray(data)
-          ? data.find((p: BlogPost) => p.slug === params.slug)
-          : null;
-        if (found) {
-          setPost(found);
-        } else {
-          setNotFound(true);
-        }
+        setPost(data);
         setLoading(false);
       })
       .catch(() => {
@@ -123,13 +107,12 @@ export default function BlogPostPage({
     return (
       <main className="min-h-screen bg-background">
         <Navbar />
-        <div className="container-max px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-4xl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
           <div className="space-y-4 animate-pulse">
             <div className="h-4 bg-muted rounded w-24" />
             <div className="h-10 bg-muted rounded w-3/4" />
             <div className="h-4 bg-muted rounded w-full" />
             <div className="h-4 bg-muted rounded w-5/6" />
-            <div className="h-4 bg-muted rounded w-4/6" />
           </div>
         </div>
         <Footer />
@@ -141,17 +124,18 @@ export default function BlogPostPage({
     return (
       <main className="min-h-screen bg-background">
         <Navbar />
-        <div className="container-max section-padding pt-32 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 text-center">
+          <div className="text-6xl mb-6">📝</div>
           <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
-          <p className="text-muted-foreground mb-8">
-            The blog post you are looking for does not exist yet.
+          <p className="text-muted-foreground mb-8 text-lg">
+            This blog post does not exist or has been removed.
           </p>
           <Link
             href="/blog"
-            className="text-primary hover:opacity-80 transition-opacity flex items-center gap-2 justify-center"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Blog
+            View All Posts
           </Link>
         </div>
         <Footer />
@@ -163,9 +147,9 @@ export default function BlogPostPage({
     <main className="min-h-screen bg-background">
       <Navbar />
 
-      <article className="container-max px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-4xl">
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
 
-        {/* Back Button */}
+        {/* Back */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -242,17 +226,17 @@ export default function BlogPostPage({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="prose prose-lg max-w-none"
+          className="prose prose-lg max-w-none mb-16"
         >
           {renderContent(post.content)}
         </motion.div>
 
-        {/* Footer CTA */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-16 p-8 rounded-xl border text-center"
+          className="p-8 rounded-xl border text-center"
           style={{ borderColor: "var(--color-border)" }}
         >
           <h3 className="text-xl font-bold mb-2">Enjoyed this post?</h3>

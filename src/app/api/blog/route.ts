@@ -4,8 +4,32 @@ import { slugify, readingTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const slug = searchParams.get("slug");
+
+    if (slug) {
+      const post = await prisma.blogPost.findUnique({
+        where: { slug },
+        include: { category: true },
+      });
+
+      if (!post) {
+        return NextResponse.json(
+          { error: "Post not found" },
+          { status: 404 }
+        );
+      }
+
+      await prisma.blogPost.update({
+        where: { slug },
+        data: { views: { increment: 1 } },
+      });
+
+      return NextResponse.json(post);
+    }
+
     const posts = await prisma.blogPost.findMany({
       orderBy: { createdAt: "desc" },
       include: { category: true },
@@ -42,14 +66,8 @@ export async function POST(request: NextRequest) {
 
     const slug = slugify(title);
     const postReadingTime = readingTime(content);
-
-    const existingPost = await prisma.blogPost.findUnique({
-      where: { slug },
-    });
-
-    const finalSlug = existingPost
-      ? slug + "-" + Date.now()
-      : slug;
+    const existing = await prisma.blogPost.findUnique({ where: { slug } });
+    const finalSlug = existing ? slug + "-" + Date.now() : slug;
 
     const post = await prisma.blogPost.create({
       data: {
