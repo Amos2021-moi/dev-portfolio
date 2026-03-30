@@ -14,7 +14,6 @@ import {
   Menu,
   X,
   Code2,
-  Bell,
   BarChart2,
 } from "lucide-react";
 
@@ -237,18 +236,14 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
-            <button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </button>
-            <Link
-              href="/"
-              target="_blank"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View Site
-            </Link>
-          </div>
+  <Link
+    href="/"
+    target="_blank"
+    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+  >
+    View Site
+  </Link>
+</div>
         </header>
 
         {/* Page Content */}

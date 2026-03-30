@@ -51,19 +51,15 @@ function ParticleBackground() {
     function animate() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       particles.forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
-
         if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(99, 102, 241, ${p.opacity})`;
+        ctx.fillStyle = "rgba(99, 102, 241, " + p.opacity + ")";
         ctx.fill();
-
         particles.slice(i + 1).forEach((p2) => {
           const dx = p.x - p2.x;
           const dy = p.y - p2.y;
@@ -72,13 +68,12 @@ function ParticleBackground() {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(99, 102, 241, ${0.15 * (1 - dist / 120)})`;
+            ctx.strokeStyle = "rgba(99, 102, 241, " + 0.15 * (1 - dist / 120) + ")";
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
         });
       });
-
       animId = requestAnimationFrame(animate);
     }
 
@@ -89,7 +84,6 @@ function ParticleBackground() {
       canvas.height = window.innerHeight;
     };
     window.addEventListener("resize", handleResize);
-
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
@@ -107,30 +101,36 @@ function ParticleBackground() {
 
 function ResumeButton() {
   const [url, setUrl] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     fetch("/api/resume")
       .then((res) => res.json())
       .then((data) => {
-        if (data.exists) setUrl(data.url);
+        if (data.exists && data.url) setUrl(data.url);
+        setChecked(true);
       })
-      .catch(() => {});
+      .catch(() => setChecked(true));
   }, []);
 
-  if (!url) return null;
+  if (!checked || !url) return null;
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-    >
-      <Download className="w-4 h-4" />
-      Resume
-    </a>
+    <>
+      <span className="text-muted-foreground">·</span>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+      >
+        <Download className="w-4 h-4" />
+        Resume
+      </a>
+    </>
   );
 }
+
 export default function Hero() {
   const [currentText, setCurrentText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -162,7 +162,6 @@ export default function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       <ParticleBackground />
 
-      {/* Gradient Orbs */}
       <div
         className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full blur-3xl animate-float pointer-events-none"
         style={{ backgroundColor: "rgb(99 102 241 / 0.15)" }}
@@ -175,14 +174,12 @@ export default function Hero() {
       <div className="max-w-5xl mx-auto px-5 sm:px-8 relative z-10 py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-          {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             className="flex flex-col gap-6"
           >
-            {/* Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -196,7 +193,6 @@ export default function Hero() {
               </span>
             </motion.div>
 
-            {/* Heading */}
             <div className="flex flex-col gap-2">
               <motion.p
                 initial={{ opacity: 0 }}
@@ -228,7 +224,6 @@ export default function Hero() {
               </motion.div>
             </div>
 
-            {/* Bio */}
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -238,7 +233,6 @@ export default function Hero() {
               {siteConfig.author.bio}
             </motion.p>
 
-            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -262,12 +256,11 @@ export default function Hero() {
               </a>
             </motion.div>
 
-            {/* Social Links */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="flex items-center gap-4 text-sm"
+              className="flex items-center gap-4 text-sm flex-wrap"
             >
               
               <a
@@ -287,12 +280,10 @@ export default function Hero() {
                 <Mail className="w-4 h-4" />
                 Email
               </a>
-              <span className="text-muted-foreground">·</span>
               <ResumeButton />
             </motion.div>
           </motion.div>
 
-          {/* Right Content - Terminal Card */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -307,8 +298,10 @@ export default function Hero() {
                 boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
               }}
             >
-              {/* Terminal Header */}
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: "var(--color-border)" }}>
+              <div
+                className="flex items-center gap-2 mb-4 pb-3 border-b"
+                style={{ borderColor: "var(--color-border)" }}
+              >
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
@@ -317,7 +310,6 @@ export default function Hero() {
                 </span>
               </div>
 
-              {/* Terminal Content */}
               <div className="font-mono text-sm space-y-3">
                 <div className="flex gap-2">
                   <span className="text-green-400">$</span>
@@ -326,7 +318,6 @@ export default function Hero() {
                 <div className="text-muted-foreground pl-4 text-xs">
                   Mark Amos Osiemo — CS Student & Developer
                 </div>
-
                 <div className="flex gap-2">
                   <span className="text-green-400">$</span>
                   <span className="text-blue-400">cat skills.txt</span>
@@ -341,30 +332,16 @@ export default function Hero() {
                     </span>
                   ))}
                 </div>
-
                 <div className="flex gap-2">
                   <span className="text-green-400">$</span>
                   <span className="text-blue-400">git log --oneline</span>
                 </div>
                 <div className="pl-4 space-y-1 text-xs text-muted-foreground">
-                  <div>
-                    <span className="text-yellow-400">a1b2c3d</span>{" "}
-                    Built full-stack portfolio
-                  </div>
-                  <div>
-                    <span className="text-yellow-400">e4f5g6h</span>{" "}
-                    Added Gemini AI assistant
-                  </div>
-                  <div>
-                    <span className="text-yellow-400">i7j8k9l</span>{" "}
-                    Integrated GitHub API sync
-                  </div>
-                  <div>
-                    <span className="text-yellow-400">m1n2o3p</span>{" "}
-                    Setup Neon PostgreSQL
-                  </div>
+                  <div><span className="text-yellow-400">a1b2c3d</span> Built full-stack portfolio</div>
+                  <div><span className="text-yellow-400">e4f5g6h</span> Added Gemini AI assistant</div>
+                  <div><span className="text-yellow-400">i7j8k9l</span> Integrated GitHub API sync</div>
+                  <div><span className="text-yellow-400">m1n2o3p</span> Setup Neon PostgreSQL</div>
                 </div>
-
                 <div className="flex gap-2">
                   <span className="text-green-400">$</span>
                   <span className="animate-pulse text-white">_</span>
