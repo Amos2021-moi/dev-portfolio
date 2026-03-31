@@ -2,6 +2,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
 import Skills from "@/components/sections/Skills";
+import SkillsProgress from "@/components/sections/SkillsProgress";
 import ProjectsPreview from "@/components/sections/ProjectsPreview";
 import GitHubStats from "@/components/sections/GitHubStats";
 import Newsletter from "@/components/sections/Newsletter";
@@ -14,6 +15,7 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Skills />
+      <SkillsProgress />
       <ProjectsPreview />
       <GitHubStats />
       <Newsletter />

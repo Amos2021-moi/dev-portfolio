@@ -19,6 +19,7 @@ export const navItems = [
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "#contact" },
+    { label: "Support", href: "/donate" },
 ];
 
 export const skills = [
