@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import LikeButton from "@/components/ui/LikeButton";
+import SocialShare from "@/components/ui/SocialShare";
+import ProjectQRCode from "@/components/ui/QRCode";
+import Comments from "@/components/ui/Comments";
 import { ArrowLeft, ExternalLink, GitBranch, Star, Calendar, Eye } from "lucide-react";
 
 interface Project {
@@ -18,6 +22,7 @@ interface Project {
   liveUrl: string;
   stars: number;
   views: number;
+  likes: number;
   status: string;
   featured: boolean;
   createdAt: string;
@@ -88,13 +93,14 @@ export default function ProjectPage({
     );
   }
 
+  const projectUrl = "https://markosiemo.vercel.app/projects/" + project.slug;
+
   return (
     <main className="min-h-screen bg-background">
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
 
-        {/* Back */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -109,7 +115,6 @@ export default function ProjectPage({
           </Link>
         </motion.div>
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +123,7 @@ export default function ProjectPage({
         >
           <div className="h-1 w-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 mb-6" />
 
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
             <span
               className="text-xs font-medium px-3 py-1 rounded-full"
               style={{
@@ -165,17 +170,18 @@ export default function ProjectPage({
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-4 mt-6">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 mt-6">
             {project.githubUrl && (
               <a
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 border px-6 py-3 rounded-lg font-medium hover:bg-accent transition-colors text-sm"
+                className="flex items-center gap-2 border px-5 py-2.5 rounded-lg font-medium hover:bg-accent transition-colors text-sm"
                 style={{ borderColor: "var(--color-border)" }}
               >
                 <GitBranch className="w-4 h-4" />
-                View Source Code
+                Source Code
               </a>
             )}
             {project.liveUrl && (
@@ -183,16 +189,18 @@ export default function ProjectPage({
                 href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
               >
                 <ExternalLink className="w-4 h-4" />
                 Live Demo
               </a>
             )}
+            <LikeButton projectId={project.id} initialLikes={project.likes || 0} />
+            <SocialShare title={project.title} url={projectUrl} />
+            <ProjectQRCode url={projectUrl} title={project.title} />
           </div>
         </motion.div>
 
-        {/* Content */}
         {project.content && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -209,7 +217,6 @@ export default function ProjectPage({
           </motion.div>
         )}
 
-        {/* Tech Stack */}
         {project.techStack && project.techStack.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -232,17 +239,14 @@ export default function ProjectPage({
           </motion.div>
         )}
 
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="p-8 rounded-xl border text-center"
+          className="p-8 rounded-xl border text-center mb-12"
           style={{ borderColor: "var(--color-border)" }}
         >
-          <h3 className="text-xl font-bold mb-2">
-            Interested in working together?
-          </h3>
+          <h3 className="text-xl font-bold mb-2">Interested in working together?</h3>
           <p className="text-muted-foreground mb-4">
             I am always open to new projects and collaborations.
           </p>
@@ -253,6 +257,9 @@ export default function ProjectPage({
             Get In Touch
           </Link>
         </motion.div>
+
+        {/* Comments */}
+        <Comments projectId={project.id} />
 
       </div>
 

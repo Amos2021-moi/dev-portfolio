@@ -5,6 +5,7 @@ import { siteConfig } from "@/lib/config";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import AnalyticsProvider from "@/components/providers/AnalyticsProvider";
+import CustomCursor from "@/components/ui/CustomCursor";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
+    template: "%s | " + siteConfig.name,
   },
   description: siteConfig.description,
   keywords: [
@@ -34,6 +35,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: siteConfig.author.name, url: siteConfig.url }],
   creator: siteConfig.author.name,
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -59,20 +65,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-// =========================================================
-// UPDATED SECTION: ADDED FOR PWA & APPLE ICON SUPPORT
-// =========================================================
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Mark.dev",
-  },
-  icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
-  },
-// =========================================================
 };
 
 export default function RootLayout({
@@ -83,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={inter.variable + " " + jetbrainsMono.variable + " font-sans antialiased"}
         style={{
           backgroundColor: "var(--color-background)",
           color: "var(--color-foreground)",
@@ -92,6 +84,7 @@ export default function RootLayout({
         <SessionProvider>
           <ThemeProvider>
             <AnalyticsProvider>
+              <CustomCursor />
               {children}
             </AnalyticsProvider>
           </ThemeProvider>

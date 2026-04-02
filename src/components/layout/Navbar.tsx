@@ -6,6 +6,7 @@ import { Menu, X, Code2, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/config";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import CommandPalette from "@/components/ui/CommandPalette";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,18 +26,11 @@ export default function Navbar() {
         scrolled ? "border-b" : "bg-transparent border-transparent"
       )}
       style={{
-        backgroundColor: scrolled
-          ? "var(--color-background)"
-          : "transparent",
-        borderColor: scrolled
-          ? "var(--color-border)"
-          : "transparent",
-        boxShadow: scrolled
-          ? "0 1px 12px rgba(0,0,0,0.06)"
-          : "none",
+        backgroundColor: scrolled ? "var(--color-background)" : "transparent",
+        borderColor: scrolled ? "var(--color-border)" : "transparent",
+        boxShadow: scrolled ? "0 1px 12px rgba(0,0,0,0.06)" : "none",
       }}
     >
-      {/* Inner container — constrained width, comfortable padding */}
       <div className="max-w-5xl mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-14">
 
@@ -52,7 +46,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-5">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -63,13 +57,13 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Divider */}
             <div
               className="w-px h-4"
               style={{ backgroundColor: "var(--color-border)" }}
             />
 
-            {/* Theme Toggle */}
+            <CommandPalette />
+
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-md hover:bg-accent transition-colors"

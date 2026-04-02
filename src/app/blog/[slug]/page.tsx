@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import SocialShare from "@/components/ui/SocialShare";
+import Comments from "@/components/ui/Comments";
 import { ArrowLeft, Clock, Eye, Calendar, Tag } from "lucide-react";
 
 interface BlogPost {
@@ -112,7 +114,6 @@ export default function BlogPostPage({
             <div className="h-4 bg-muted rounded w-24" />
             <div className="h-10 bg-muted rounded w-3/4" />
             <div className="h-4 bg-muted rounded w-full" />
-            <div className="h-4 bg-muted rounded w-5/6" />
           </div>
         </div>
         <Footer />
@@ -143,13 +144,14 @@ export default function BlogPostPage({
     );
   }
 
+  const postUrl = "https://markosiemo.vercel.app/blog/" + post.slug;
+
   return (
     <main className="min-h-screen bg-background">
       <Navbar />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
 
-        {/* Back */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -164,7 +166,6 @@ export default function BlogPostPage({
           </Link>
         </motion.div>
 
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,31 +198,33 @@ export default function BlogPostPage({
           )}
 
           <div
-            className="flex flex-wrap items-center gap-6 py-4 border-t border-b text-sm text-muted-foreground"
+            className="flex flex-wrap items-center justify-between gap-4 py-4 border-t border-b"
             style={{ borderColor: "var(--color-border)" }}
           >
-            <span className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {new Date(post.createdAt).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-            {post.readingTime && (
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {post.readingTime}
+                <Calendar className="w-4 h-4" />
+                {new Date(post.createdAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </span>
-            )}
-            <span className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              {post.views} views
-            </span>
+              {post.readingTime && (
+                <span className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {post.readingTime}
+                </span>
+              )}
+              <span className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                {post.views} views
+              </span>
+            </div>
+            <SocialShare title={post.title} url={postUrl} />
           </div>
         </motion.div>
 
-        {/* Content */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -231,12 +234,11 @@ export default function BlogPostPage({
           {renderContent(post.content)}
         </motion.div>
 
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="p-8 rounded-xl border text-center"
+          className="p-8 rounded-xl border text-center mb-12"
           style={{ borderColor: "var(--color-border)" }}
         >
           <h3 className="text-xl font-bold mb-2">Enjoyed this post?</h3>
@@ -250,6 +252,9 @@ export default function BlogPostPage({
             Get In Touch
           </Link>
         </motion.div>
+
+        {/* Comments */}
+        <Comments postId={post.id} />
 
       </article>
 

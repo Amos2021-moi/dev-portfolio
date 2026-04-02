@@ -16,10 +16,11 @@ export const siteConfig: SiteConfig = {
 
 export const navItems = [
   { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
-  { label: "Contact", href: "#contact" },
-    { label: "Support", href: "/donate" },
+  { label: "Contact", href: "/#contact" },
+  { label: "Support", href: "/donate" },
 ];
 
 export const skills = [
@@ -43,7 +44,7 @@ export const socialLinks = [
   },
   {
     label: "Email",
-    href: "mailto:amosmark2021@gmail.com",
+    href: "mailto:amosmark2332@gmail.com",
     icon: "mail",
   },
 ];

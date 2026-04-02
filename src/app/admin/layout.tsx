@@ -15,6 +15,7 @@ import {
   X,
   Code2,
   BarChart2,
+  Star,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -22,6 +23,7 @@ const sidebarItems = [
   { label: "Projects", href: "/admin/projects", icon: FolderKanban },
   { label: "Blog Posts", href: "/admin/blog", icon: FileText },
   { label: "Messages", href: "/admin/messages", icon: MessageSquare },
+  { label: "Testimonials", href: "/admin/testimonials", icon: Star },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart2 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
