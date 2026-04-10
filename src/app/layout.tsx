@@ -5,6 +5,7 @@ import { siteConfig } from "@/lib/config";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import AnalyticsProvider from "@/components/providers/AnalyticsProvider";
+import { Analytics } from "@vercel/analytics/next";
 
 import ScrollProgress from "@/components/ui/ScrollProgress";
 
@@ -90,6 +91,7 @@ export default function RootLayout({
             </AnalyticsProvider>
           </ThemeProvider>
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
