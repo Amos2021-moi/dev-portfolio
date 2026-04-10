@@ -4,12 +4,16 @@ import { rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  const limited = rateLimit(request, {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Ensure rateLimit is handled correctly
+  const limitedResponse = await rateLimit(request, {
     limit: 20,
     windowMs: 60 * 1000,
   });
-  if (limited) return limited;
+
+  if (limitedResponse instanceof NextResponse) {
+    return limitedResponse;
+  }
 
   try {
     const [
@@ -17,7 +21,7 @@ export async function GET(request: NextRequest) {
       totalPosts,
       totalViews,
       totalSubscribers,
-      totalLikes,
+      totalLikesResult,
     ] = await Promise.all([
       prisma.project.count(),
       prisma.blogPost.count({ where: { published: true } }),
@@ -26,17 +30,28 @@ export async function GET(request: NextRequest) {
       prisma.project.aggregate({ _sum: { likes: true } }),
     ]);
 
-    return NextResponse.json({
-      projects: totalProjects,
-      blogPosts: totalPosts,
-      pageViews: totalViews,
-      subscribers: totalSubscribers,
-      totalLikes: totalLikes._sum.likes || 0,
-      generatedAt: new Date().toISOString(),
-    }, {
-      headers: { "Access-Control-Allow-Origin": "*" },
-    });
+    return NextResponse.json(
+      {
+        projects: totalProjects,
+        blogPosts: totalPosts,
+        pageViews: totalViews,
+        subscribers: totalSubscribers,
+        totalLikes: totalLikesResult._sum.likes || 0,
+        generatedAt: new Date().toISOString(),
+      },
+      {
+        status: 200,
+        headers: { 
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "no-store, max-age=0"
+        },
+      }
+    );
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+    console.error("Stats API Error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch stats" }, 
+      { status: 500 }
+    );
   }
 }
