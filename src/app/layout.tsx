@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import AnalyticsProvider from "@/components/providers/AnalyticsProvider";
 
+import ScrollProgress from "@/components/ui/ScrollProgress";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -83,6 +85,7 @@ export default function RootLayout({
         <SessionProvider>
           <ThemeProvider>
             <AnalyticsProvider>
+              <ScrollProgress />
               {children}
             </AnalyticsProvider>
           </ThemeProvider>

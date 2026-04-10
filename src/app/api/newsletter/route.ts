@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendNewsletterConfirmation } from "@/lib/emails";
+import { rateLimit } from "@/lib/rateLimit";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -14,6 +17,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, {
+    limit: 2,
+    windowMs: 60 * 1000,
+    message: "Too many subscription attempts. Please wait before trying again.",
+  });
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { email, name } = body;
